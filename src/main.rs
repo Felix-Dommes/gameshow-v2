@@ -1,19 +1,17 @@
 use dotenv::dotenv;
 
-mod database;
+mod datahandler;
 
-use database::Database;
+use datahandler::DataHandler;
 
 
 #[actix_web::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>>
 {
     dotenv().ok();
-    let db = Database::connect().await?;
-    db.migration_up().await?;
     
-    //
+    let db = DataHandler::new();
+    db.create_player("Test".to_owned()).await?;
     
-    db.migration_down().await?;
     Ok(())
 }
