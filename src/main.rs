@@ -1,6 +1,7 @@
 use dotenv::dotenv;
 
 mod datahandler;
+mod webserver;
 
 use datahandler::DataHandler;
 
@@ -11,7 +12,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>
     dotenv().ok();
     
     let db = DataHandler::new();
-    db.create_player("Test".to_owned()).await?;
+    let res = webserver::startup(db).await?;
     
-    Ok(())
+    Ok(res)
 }

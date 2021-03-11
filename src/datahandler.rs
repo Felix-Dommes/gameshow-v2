@@ -1,8 +1,4 @@
-#![allow(dead_code)] //TODO remove?
-
-use actix_web::rt::task::JoinHandle;
 use tokio::sync::{mpsc, oneshot};
-use std::sync::Arc;
 
 mod database;
 mod dataworker;
@@ -14,23 +10,18 @@ use dataworker::{DataAccess, DataWorker};
 #[derive(Clone)]
 pub struct DataHandler
 {
-    worker: Arc<JoinHandle<()>>,
     sender: mpsc::Sender<DataAccess>,
 }
 
 impl DataHandler
 {
+    /// Create a new DataHandler and spawn a worker for it.
+    /// Normally the worker finishes all accesses and then terminates when all DataHandlers are dropped/closed.
     pub fn new() -> Self
     {
         let (worker, sender) = DataWorker::new();
-        DataHandler { worker: Arc::new(worker.spawn_worker()), sender: sender }
-    }
-    
-    /// Normally the worker finishes all accesses and then terminates when all data handlers are dropped/closed.
-    /// But in case it should be aborted earlier, use this.
-    pub fn abort(self)
-    {
-        self.worker.abort()
+        worker.spawn_worker();
+        DataHandler { sender: sender }
     }
     
     /// Create a player in the database

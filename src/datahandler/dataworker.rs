@@ -1,5 +1,4 @@
 use actix_web::rt;
-use actix_web::rt::task::JoinHandle;
 use tokio::sync::{mpsc, oneshot};
 
 use super::database::DataBase;
@@ -29,12 +28,13 @@ impl DataWorker
         (worker, sender)
     }
     
-    pub fn spawn_worker(self) -> JoinHandle<()>
+    /// spawn worker to handle all incoming DataAccesses
+    pub fn spawn_worker(self)
     {
         rt::spawn(self.handler())
     }
     
-    /// handle received data accesses
+    /// handle received DataAccesses
     async fn handler(mut self)
     {
         while let Some(access) = self.receiver.recv().await
