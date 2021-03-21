@@ -25,7 +25,7 @@ impl DataHandler
     }
     
     /// Create a player in the database
-    pub async fn create_player(&self, name: String) -> Result<(), &str>
+    pub async fn create_player(&self, name: String) -> Result<String, &str>
     {
         let (result_sender, result_receiver) = oneshot::channel();
         self.sender.send(DataAccess::CreatePlayer(result_sender, name)).await.map_err(|_err| "db send data access error (dropped channel)")?;

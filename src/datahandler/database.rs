@@ -18,7 +18,7 @@ impl DataBase
         DataBase { players: HashMap::new(), lobbies: HashMap::new() }
     }
     
-    pub fn create_player(&mut self, name: String)
+    pub fn create_player(&mut self, name: String) -> String
     {
         //be sure UUID is REALLY unique
         let mut uuid = String::from("");
@@ -28,6 +28,8 @@ impl DataBase
         }
         
         //add player
-        self.players.insert(uuid, name);
+        self.players.insert(uuid.clone(), name);
+        //return UUID
+        uuid
     }
 }

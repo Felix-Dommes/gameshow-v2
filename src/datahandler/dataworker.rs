@@ -9,7 +9,7 @@ const DATA_ACCESS_CAPACITY:usize = 50;
 /// Manageable data requests and manipulations
 pub enum DataAccess
 {
-    CreatePlayer(oneshot::Sender<()>, String),
+    CreatePlayer(oneshot::Sender<String>, String),
 }
 
 /// Single instance of worker to access the database
