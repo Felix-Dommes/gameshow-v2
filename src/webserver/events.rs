@@ -1,8 +1,9 @@
-use actix_web::{web, get, HttpRequest, HttpResponse, Responder};
+use actix_web::{web, error, get, HttpRequest, HttpResponse, Responder};
+use actix_web::Result as HttpResult;
 use actix_session::Session;
 
 use crate::datahandler::DataHandler;
-use super::{has_cookie_consent, no_consent_error};
+use super::ensure_cookie_consent;
 
 
 pub fn config(cfg: &mut web::ServiceConfig)
@@ -11,12 +12,9 @@ pub fn config(cfg: &mut web::ServiceConfig)
 }
 
 #[get("/{lobby_id}")]
-async fn event_stream(db: web::Data<DataHandler>, session: Session, request: HttpRequest, lobby_id: web::Path<String>) -> impl Responder
+async fn event_stream(db: web::Data<DataHandler>, session: Session, request: HttpRequest, lobby_id: web::Path<String>) -> HttpResult<HttpResponse>
 {
-    if !has_cookie_consent(&request)
-    {
-        return no_consent_error();
-    }
+    ensure_cookie_consent(&request)?;
     
-    HttpResponse::Ok().body(lobby_id.clone()) //TODO implement
+    Ok(HttpResponse::Ok().body(lobby_id.clone())) //TODO implement
 }

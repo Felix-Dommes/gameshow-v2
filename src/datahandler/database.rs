@@ -2,7 +2,7 @@ use uuid::Uuid;
 use std::collections::HashMap;
 
 
-struct Lobby
+struct Lobby //move to game module
 {}
 
 pub struct DataBase
@@ -31,5 +31,10 @@ impl DataBase
         self.players.insert(uuid.clone(), name);
         //return UUID
         uuid
+    }
+    
+    pub fn get_player_name(&self, uuid: String) -> String
+    {
+        self.players[&uuid].clone()
     }
 }

@@ -1,8 +1,8 @@
 <template>
   <div class="background" v-if="visible">
     <div class="window">
-      <p class="text">This site uses (only functional) cookies!</p>
-      <div class="button-accept" @click="accept">Accept</div>
+      <p class="text">{{ lang["This site uses (only functional) cookies!"] }}</p>
+      <div class="button-accept" @click="accept">{{ lang["Accept"] }}</div>
     </div>
   </div>
 </template>
@@ -12,6 +12,7 @@ import global from '../assets/global.js'
 
 export default {
   name: 'CookieConsent',
+  props: ["lang"],
   data: function() { return {
     visible: false,
   }; },

@@ -10,6 +10,7 @@ const DATA_ACCESS_CAPACITY:usize = 50;
 pub enum DataAccess
 {
     CreatePlayer(oneshot::Sender<String>, String),
+    GetPlayerName(oneshot::Sender<String>, String),
 }
 
 /// Single instance of worker to access the database
@@ -43,6 +44,10 @@ impl DataWorker
             {
                 DataAccess::CreatePlayer(result_sender, name) => {
                     let result = self.db.create_player(name);
+                    result_sender.send(result).ok();
+                },
+                DataAccess::GetPlayerName(result_sender, uuid) => {
+                    let result = self.db.get_player_name(uuid);
                     result_sender.send(result).ok();
                 },
             }

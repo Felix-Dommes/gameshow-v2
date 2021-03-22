@@ -1,5 +1,6 @@
 #[allow(unused_imports)]
-use actix_web::{web, middleware, App, HttpServer, HttpRequest, HttpMessage, HttpResponse};
+use actix_web::{web, error, middleware, App, HttpServer, HttpRequest, HttpMessage, HttpResponse};
+use actix_web::Result as HttpResult;
 use actix_session::CookieSession;
 
 mod api;
@@ -26,7 +27,7 @@ pub async fn startup(db: DataHandler) -> std::io::Result<()>
             .service(web::scope("/events").configure(events::config))
             
             //static files
-            .service(actix_files::Files::new("/", "./static").index_file("test.htm"))
+            .service(actix_files::Files::new("/", "./static").index_file("index.html"))
     } )
         .bind("127.0.0.1:8000")?
         .run()
@@ -34,21 +35,16 @@ pub async fn startup(db: DataHandler) -> std::io::Result<()>
 }
 
 
-fn has_cookie_consent(request: &HttpRequest) -> bool
+fn ensure_cookie_consent(request: &HttpRequest) -> HttpResult<()>
 {
     let consent = request.cookie("CONSENT");
     if consent.is_some()
     {
-        return match consent.unwrap().value()
+        match consent.unwrap().value()
         {
-            "1" => true,
-            _ => false,
+            "1" => return Ok(()),
+            _ => {},
         };
     }
-    false
-}
-
-fn no_consent_error() -> HttpResponse
-{
-    HttpResponse::Unauthorized().body("Cookies were not accepted, but are required!")
+    Err(error::ErrorUnauthorized("Cookies were not accepted, but are required!"))
 }
