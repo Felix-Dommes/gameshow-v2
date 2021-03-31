@@ -1,5 +1,10 @@
+redeploy: clean deploy
+
 deploy: build
-	cp -r ./gameshow/dist/* ../static/
+	mv ./gameshow/dist/* ../static/
+
+clean:
+	rm -rf ../static/*
 
 build:
 	cd ./gameshow && \

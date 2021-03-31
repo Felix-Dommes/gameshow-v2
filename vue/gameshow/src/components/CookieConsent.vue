@@ -32,6 +32,7 @@ export default {
   {
     let consent = global.getCookie("CONSENT");
     if (consent != "1") this.show();
+    else this.$emit("consent");
   },
 }
 </script>
