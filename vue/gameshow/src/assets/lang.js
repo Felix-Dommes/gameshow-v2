@@ -8,6 +8,8 @@ export default {
         "Name": "Name",
         "Submit": "Submit",
         "Name must not be empty!": "Name must not be empty!",
+        "Loading": "Loading",
+        "Connection to server failed!": "Connection to server failed!",
     },
     de: {
         "Accept": "Akzeptieren",
@@ -17,5 +19,7 @@ export default {
         "Name": "Name",
         "Submit": "Absenden",
         "Name must not be empty!": "Name darf nicht leer sein!",
+        "Loading": "Lädt",
+        "Connection to server failed!": "Verbindung zum Server fehlgeschlagen!",
     },
 }

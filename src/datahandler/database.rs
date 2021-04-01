@@ -2,7 +2,7 @@ use uuid::Uuid;
 use std::collections::HashMap;
 
 
-struct Lobby //move to game module
+struct Lobby //TODO move to game module
 {}
 
 pub struct DataBase
@@ -33,8 +33,22 @@ impl DataBase
         uuid
     }
     
-    pub fn get_player_name(&self, uuid: String) -> String
+    pub fn set_player_name(&mut self, uuid: String, name: String) -> bool
     {
-        self.players[&uuid].clone()
+        let was_there = self.players.contains_key(&uuid);
+        self.players.entry(uuid).and_modify(|n| *n = name.clone()).or_insert(name);
+        was_there
+    }
+    
+    pub fn get_player_name(&self, uuid: String) -> Option<String>
+    {
+        if !self.players.contains_key(&uuid)
+        {
+            None
+        }
+        else
+        {
+            Some(self.players[&uuid].clone())
+        }
     }
 }

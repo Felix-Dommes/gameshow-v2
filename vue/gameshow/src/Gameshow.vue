@@ -5,7 +5,7 @@
     <div class="mainWindow">
       <!-- side bar for player list and status etc -->
       <div class="sidebar">
-        <template v-if="selectedWindow != 'login-window'">
+        <template v-if="nickname != '' && lobby != ''">
           <transition name="transition" mode="out-in" appear>
             <div class="compWindow" style="text-align: center;">
               <span>{{ lang["Question"] }} {{ current_question.id }}</span>
@@ -23,8 +23,14 @@
       <!-- main stage for game stuff -->
       <div class="mainStage">
         <transition name="transition" mode="out-in" appear>
-          <template v-if="selectedWindow == 'login-window'">
-            <login-window :lang="lang" @set-name="void(0)" />
+          <template v-if="selectedWindow == 'loading'">
+            <div class="compWindow">
+              {{ lang["Loading"] }}..
+            </div>
+          </template>
+          
+          <template v-else-if="selectedWindow == 'login-window'">
+            <login-window :lang="lang" @set-name="set_name" />
           </template>
           
           <template v-else>
@@ -40,11 +46,9 @@
 
 <script>
 import lang from './assets/lang.js'
+import api from './assets/api.js'
 import CookieConsent from './components/CookieConsent.vue'
 import LoginWindow from './components/LoginWindow.vue'
-
-//const apiPath = "./api/";
-//const eventPath = "./events/";
 
 export default
 {
@@ -56,7 +60,7 @@ export default
   data: () => { return {
     lang: lang.en,
     consent: false,
-    selectedWindow: "login-window",
+    selectedWindow: "loading",
     nickname: "",
     lobby: "",
     money: 1,
@@ -74,18 +78,37 @@ export default
       {
         case "de":
           this.lang = lang.de;
+          api.lang = lang.de;
           return true;
         case "en":
           this.lang = lang.en;
+          api.lang = lang.en;
           return true;
         default:
           return false;
       }
     },
-    got_consent: function()
+    got_consent: async function()
     {
       this.consent = true;
+      //check if already logged in
+      let name = await api.get_name();
+      if (name != "") {
+        this.nickname = name;
+        //TODO
+      }
+      else {
+        this.selectedWindow = "login-window";
+      }
     },
+    set_name: async function(name)
+    {
+      if (!this.consent) return;
+      if (await api.set_name(name)) {
+        this.nickname = name;
+        //TODO
+      }
+    }
   },
   mounted: function()
   {

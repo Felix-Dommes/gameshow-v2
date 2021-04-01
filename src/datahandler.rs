@@ -32,8 +32,16 @@ impl DataHandler
         result_receiver.await.map_err(|_err| "db receive data access result error (dropped channel)")
     }
     
-    /// Get player name for an UUID
-    pub async fn get_player_name(&self, uuid: String) -> Result<String, &'static str>
+    /// Change name of a player in the database
+    pub async fn set_player_name(&self, uuid: String, name: String) -> Result<bool, &'static str>
+    {
+        let (result_sender, result_receiver) = oneshot::channel();
+        self.sender.send(DataAccess::SetPlayerName(result_sender, uuid, name)).await.map_err(|_err| "db send data access error (dropped channel)")?;
+        result_receiver.await.map_err(|_err| "db receive data access result error (dropped channel)")
+    }
+    
+    /// Get player name for an UUID (if the UUID is valid, else None)
+    pub async fn get_player_name(&self, uuid: String) -> Result<Option<String>, &'static str>
     {
         let (result_sender, result_receiver) = oneshot::channel();
         self.sender.send(DataAccess::GetPlayerName(result_sender, uuid)).await.map_err(|_err| "db send data access error (dropped channel)")?;

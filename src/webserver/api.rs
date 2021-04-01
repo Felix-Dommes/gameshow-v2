@@ -9,13 +9,14 @@ use super::ensure_cookie_consent;
 
 pub fn config(cfg: &mut web::ServiceConfig)
 {
-    cfg.service(set_name);
+    cfg.service(set_name)
+        .service(get_name);
 }
 
 
 //HttpResponse::NoContent() //use as HttpResponse::Ok() when there is no body
 
-/// Set the current user's name
+/// Set the current user's name; if not logged in, create new user
 #[derive(Serialize, Deserialize)]
 struct SetNameData
 {
@@ -26,10 +27,25 @@ async fn set_name(db: web::Data<DataHandler>, session: Session, request: HttpReq
 {
     ensure_cookie_consent(&request)?;
     
-    let uuid = db.create_player(query.name.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
-    session.set("uuid", uuid)?;
-    
-    Ok(HttpResponse::Created().finish())
+    //check if user exists before and possible change name only
+    if let Some(uuid) = session.get::<String>("uuid")?
+    {
+        let was_there = db.set_player_name(uuid, query.name.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        if was_there
+        {
+            Ok(HttpResponse::Ok().finish())
+        }
+        else
+        {
+            Ok(HttpResponse::Created().finish())
+        }
+    }
+    else
+    {
+        let uuid = db.create_player(query.name.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        session.set("uuid", uuid)?;
+        Ok(HttpResponse::Created().finish())
+    }
 }
 
 /// Get current user's name (for after reloading page, can be used to check if "logged in")
@@ -41,7 +57,14 @@ async fn get_name(db: web::Data<DataHandler>, session: Session, request: HttpReq
     if let Some(uuid) = session.get::<String>("uuid")?
     {
         let name = db.get_player_name(uuid).await.map_err(|err| error::ErrorInternalServerError(err))?;
-        return Ok(HttpResponse::Ok().body(name));
+        if name.is_some()
+        {
+            return Ok(HttpResponse::Ok().body(name.unwrap()));
+        }
+        else
+        {
+            return Err(error::ErrorNotFound("Invalid UUID: UUID not found!"));
+        }
     }
     else
     {
