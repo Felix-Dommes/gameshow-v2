@@ -1,8 +1,10 @@
 use tokio::sync::{mpsc, oneshot};
+use std::sync::Arc;
 
 mod database;
 mod dataworker;
 
+use crate::game::Gameshow;
 use dataworker::{DataAccess, DataWorker};
 
 
@@ -45,6 +47,22 @@ impl DataHandler
     {
         let (result_sender, result_receiver) = oneshot::channel();
         self.sender.send(DataAccess::GetPlayerName(result_sender, uuid)).await.map_err(|_err| "db send data access error (dropped channel)")?;
+        result_receiver.await.map_err(|_err| "db receive data access result error (dropped channel)")
+    }
+    
+    /// Create a new lobby with the provided UUID as admin
+    pub async fn create_lobby(&self, admin_uuid: String) -> Result<String, &'static str>
+    {
+        let (result_sender, result_receiver) = oneshot::channel();
+        self.sender.send(DataAccess::CreateLobby(result_sender, admin_uuid)).await.map_err(|_err| "db send data access error (dropped channel)")?;
+        result_receiver.await.map_err(|_err| "db receive data access result error (dropped channel)")
+    }
+    
+    /// Get a lobby handle for an UUID (if the UUID is valid, else None)
+    pub async fn get_lobby(&self, uuid: String) -> Result<Option<Arc<Gameshow>>, &'static str>
+    {
+        let (result_sender, result_receiver) = oneshot::channel();
+        self.sender.send(DataAccess::GetLobby(result_sender, uuid)).await.map_err(|_err| "db send data access error (dropped channel)")?;
         result_receiver.await.map_err(|_err| "db receive data access result error (dropped channel)")
     }
 }

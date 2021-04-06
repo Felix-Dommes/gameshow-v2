@@ -5,6 +5,7 @@ use dotenv::dotenv;
 
 mod datahandler;
 mod webserver;
+mod game;
 
 use datahandler::DataHandler;
 

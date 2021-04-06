@@ -1,14 +1,14 @@
 use uuid::Uuid;
 use std::collections::HashMap;
+use std::sync::Arc;
 
+use crate::game::Gameshow;
 
-struct Lobby //TODO move to game module
-{}
 
 pub struct DataBase
 {
     players: HashMap<String, String>,
-    lobbies: HashMap<String, Lobby>,
+    lobbies: HashMap<String, Arc<Gameshow>>,
 }
 
 impl DataBase
@@ -49,6 +49,33 @@ impl DataBase
         else
         {
             Some(self.players[&uuid].clone())
+        }
+    }
+    
+    pub fn create_lobby(&mut self, admin: String) -> String
+    {
+        //be sure UUID is REALLY unique
+        let mut uuid = String::from("");
+        while uuid == "" || self.lobbies.contains_key(&uuid)
+        {
+            uuid = Uuid::new_v4().to_simple().to_string();
+        }
+        
+        //add lobby
+        self.lobbies.insert(uuid.clone(), Arc::new(Gameshow::new(admin)));
+        //return UUID
+        uuid
+    }
+    
+    pub fn get_lobby(&self, uuid: String) -> Option<Arc<Gameshow>>
+    {
+        if !self.lobbies.contains_key(&uuid)
+        {
+            None
+        }
+        else
+        {
+            Some(self.lobbies[&uuid].clone())
         }
     }
 }

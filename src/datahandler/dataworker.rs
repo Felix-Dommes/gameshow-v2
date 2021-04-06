@@ -1,6 +1,8 @@
 use actix_web::rt;
 use tokio::sync::{mpsc, oneshot};
+use std::sync::Arc;
 
+use crate::game::Gameshow;
 use super::database::DataBase;
 
 const DATA_ACCESS_CAPACITY:usize = 50;
@@ -12,6 +14,8 @@ pub enum DataAccess
     CreatePlayer(oneshot::Sender<String>, String),
     SetPlayerName(oneshot::Sender<bool>, String, String),
     GetPlayerName(oneshot::Sender<Option<String>>, String),
+    CreateLobby(oneshot::Sender<String>, String),
+    GetLobby(oneshot::Sender<Option<Arc<Gameshow>>>, String),
 }
 
 /// Single instance of worker to access the database
@@ -53,6 +57,14 @@ impl DataWorker
                 },
                 DataAccess::GetPlayerName(result_sender, uuid) => {
                     let result = self.db.get_player_name(uuid);
+                    result_sender.send(result).ok();
+                },
+                DataAccess::CreateLobby(result_sender, admin_uuid) => {
+                    let result = self.db.create_lobby(admin_uuid);
+                    result_sender.send(result).ok();
+                },
+                DataAccess::GetLobby(result_sender, uuid) => {
+                    let result = self.db.get_lobby(uuid);
                     result_sender.send(result).ok();
                 },
             }
