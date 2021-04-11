@@ -1,5 +1,4 @@
 export default {
-    name: "global",
     getCookie: function(name)
     {
         // Split cookie string and get all individual name=value pairs in an array
@@ -19,5 +18,13 @@ export default {
 
         // Return null if not found
         return null;
+    },
+    extract_lobby_id: function()
+    {
+        //check for lobby code in URL and extract + return it if possible
+        let url = window.location.href;
+        let pos = url.indexOf("#");
+        if (pos == -1) return "";
+        else return url.substr(pos + 1);
     },
 }

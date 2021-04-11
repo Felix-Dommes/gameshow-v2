@@ -10,6 +10,11 @@ export default {
         "Name must not be empty!": "Name must not be empty!",
         "Loading": "Loading",
         "Connection to server failed!": "Connection to server failed!",
+        "Lobby ID": "Lobby ID",
+        "Create lobby": "Create lobby",
+        "Join": "Join",
+        "Lobby ID must not be empty!": "Lobby ID must not be empty!",
+        "Join lobby": "Join lobby",
     },
     de: {
         "Accept": "Akzeptieren",
@@ -21,5 +26,10 @@ export default {
         "Name must not be empty!": "Name darf nicht leer sein!",
         "Loading": "Lädt",
         "Connection to server failed!": "Verbindung zum Server fehlgeschlagen!",
+        "Lobby ID": "Lobby ID",
+        "Create lobby": "Lobby erstellen",
+        "Join": "Beitreten",
+        "Lobby ID must not be empty!": "Lobby ID darf nicht leer sein!",
+        "Join lobby": "Lobby beitreten",
     },
 }

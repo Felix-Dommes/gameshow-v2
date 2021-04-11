@@ -33,6 +33,10 @@
             <login-window :lang="lang" @set-name="set_name" />
           </template>
           
+          <template v-else-if="selectedWindow == 'lobby-selection'">
+            <lobby-selection :lang="lang" @create-lobby="create_lobby" @join-lobby="join_lobby" />
+          </template>
+          
           <template v-else>
             <div class="compWindow">
               {{ lang["Waiting for players"] }}..
@@ -45,10 +49,12 @@
 </template>
 
 <script>
+import global from './assets/global.js'
 import lang from './assets/lang.js'
 import api from './assets/api.js'
 import CookieConsent from './components/CookieConsent.vue'
 import LoginWindow from './components/LoginWindow.vue'
+import LobbySelection from './components/LobbySelection.vue'
 
 export default
 {
@@ -56,6 +62,7 @@ export default
   components: {
     CookieConsent,
     LoginWindow,
+    LobbySelection,
   },
   data: () => { return {
     lang: lang.en,
@@ -63,6 +70,7 @@ export default
     selectedWindow: "loading",
     nickname: "",
     lobby: "",
+    admin: "",
     money: 1,
     jokers: 0,
     players: [],
@@ -95,7 +103,15 @@ export default
       let name = await api.get_name();
       if (name != "") {
         this.nickname = name;
-        //TODO
+        let lobby_id = global.extract_lobby_id();
+        if (lobby_id != "")
+        {
+          if (!await this.join_lobby(lobby_id)) this.selectedWindow = "lobby-selection";
+        }
+        else
+        {
+          this.selectedWindow = "lobby-selection";
+        }
       }
       else {
         this.selectedWindow = "login-window";
@@ -106,13 +122,39 @@ export default
       if (!this.consent) return;
       if (await api.set_name(name)) {
         this.nickname = name;
-        //TODO
+        let lobby_id = global.extract_lobby_id();
+        if (lobby_id != "")
+        {
+          if (!await this.join_lobby(lobby_id)) this.selectedWindow = "lobby-selection";
+        }
+        else
+        {
+          this.selectedWindow = "lobby-selection";
+        }
       }
-    }
+    },
+    create_lobby: async function()
+    {
+      if (!this.consent) return;
+      //TODO
+      //successful: set selectedWindow
+      //set this.admin
+      //deal with same name problem
+    },
+    join_lobby: async function(lobby_id)
+    {
+      if (!this.consent) return false;
+      //TODO
+      if (lobby_id == "") return false;
+      //successful: set selectedWindow and return true;
+      //set this.admin
+      //deal with same name problem
+      return false;
+    },
   },
   mounted: function()
   {
-    //TODO check for lobby code in URL
+    //TODO?
   },
 }
 </script>

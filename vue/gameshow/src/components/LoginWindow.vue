@@ -71,6 +71,6 @@ input.button
 .error
 {
   color: red;
-  font-size: 75%;
+  font-size: 60%;
 }
 </style>
