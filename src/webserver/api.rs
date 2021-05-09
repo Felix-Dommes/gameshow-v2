@@ -10,27 +10,29 @@ use super::ensure_cookie_consent;
 pub fn config(cfg: &mut web::ServiceConfig)
 {
     cfg.service(set_name)
-        .service(get_name);
+        .service(get_name)
+        .service(create_lobby)
+        .service(join_lobby);
 }
 
 
 //HttpResponse::NoContent() //use as HttpResponse::Ok() when there is no body
 
-/// Set the current user's name; if not logged in, create new user
+// Set the current user's name; if not logged in, create new user
 #[derive(Serialize, Deserialize)]
 struct SetNameData
 {
     name: String,
 }
 #[get("/set_name")]
-async fn set_name(db: web::Data<DataHandler>, session: Session, request: HttpRequest, query: web::Query<SetNameData>) -> HttpResult<HttpResponse>
+async fn set_name(db: web::Data<DataHandler>, session: Session, request: HttpRequest, params: web::Query<SetNameData>) -> HttpResult<HttpResponse>
 {
     ensure_cookie_consent(&request)?;
     
     //check if user exists before and possible change name only
     if let Some(uuid) = session.get::<String>("uuid")?
     {
-        let was_there = db.set_player_name(uuid, query.name.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        let was_there = db.set_player_name(uuid, params.name.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
         if was_there
         {
             Ok(HttpResponse::Ok().finish())
@@ -42,13 +44,13 @@ async fn set_name(db: web::Data<DataHandler>, session: Session, request: HttpReq
     }
     else
     {
-        let uuid = db.create_player(query.name.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        let uuid = db.create_player(params.name.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
         session.set("uuid", uuid)?;
         Ok(HttpResponse::Created().finish())
     }
 }
 
-/// Get current user's name (for after reloading page, can be used to check if "logged in")
+// Get current user's name (for after reloading page, can be used to check if "logged in")
 #[get("/get_name")]
 async fn get_name(db: web::Data<DataHandler>, session: Session, request: HttpRequest) -> HttpResult<HttpResponse>
 {
@@ -63,11 +65,90 @@ async fn get_name(db: web::Data<DataHandler>, session: Session, request: HttpReq
         }
         else
         {
-            return Err(error::ErrorNotFound("Invalid UUID: UUID not found!"));
+            return Err(error::ErrorNotFound("Invalid UUID: Player UUID not found in database!"));
         }
     }
     else
     {
-        return Err(error::ErrorNotFound("Invalid session: UUID not found!"));
+        return Err(error::ErrorNotFound("Invalid session: No player UUID!"));
+    }
+}
+
+// Create a new lobby without joining
+#[get("/create_lobby")]
+async fn create_lobby(db: web::Data<DataHandler>, session: Session, request: HttpRequest) -> HttpResult<HttpResponse>
+{
+    ensure_cookie_consent(&request)?;
+    
+    if let Some(uuid) = session.get::<String>("uuid")?
+    {
+        let lobby_uuid = db.create_lobby(uuid).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        return Ok(HttpResponse::Ok().body(lobby_uuid));
+    }
+    else
+    {
+        return Err(error::ErrorUnauthorized("Invalid session: No player UUID!"));
+    }
+}
+
+// Join an existing lobby
+#[derive(Serialize, Deserialize)]
+struct JoinLobbyData
+{
+    uuid: String,
+}
+#[derive(Serialize, Deserialize)]
+struct JoinLobbyReturn
+{
+    admin: String,
+    new_name: String,
+}
+#[get("/join_lobby")]
+async fn join_lobby(db: web::Data<DataHandler>, session: Session, request: HttpRequest, params: web::Query<JoinLobbyData>) -> HttpResult<HttpResponse>
+{
+    ensure_cookie_consent(&request)?;
+    
+    if let Some(uuid) = session.get::<String>("uuid")?
+    {
+        let player_name = db.get_player_name(uuid.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        if player_name.is_some()
+        {
+            let db_lobby = db.get_lobby(params.uuid.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+            if db_lobby.is_some()
+            {
+                let lobby = db_lobby.unwrap();
+                let admin_uuid = lobby.get_admin().await;
+                let admin = db.get_player_name(admin_uuid).await.map_err(|err| error::ErrorInternalServerError(err))?;
+                if admin.is_some()
+                {
+                    //finally do the joining itself
+                    let joined = lobby.join(uuid, player_name.unwrap()).await;
+                    if joined.0
+                    {
+                        return Ok(HttpResponse::Ok().json(JoinLobbyReturn { admin: admin.unwrap(), new_name: joined.1.unwrap() }));
+                    }
+                    else
+                    {
+                        return Err(error::ErrorForbidden("Could not join lobby: Lobby is closed!"));
+                    }
+                }
+                else
+                {
+                    return Err(error::ErrorInternalServerError("Invalid UUID: Admin UUID not found in database!"));
+                }
+            }
+            else
+            {
+                return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
+            }
+        }
+        else
+        {
+            return Err(error::ErrorBadRequest("Invalid UUID: Player UUID not found in database!"));
+        }
+    }
+    else
+    {
+        return Err(error::ErrorUnauthorized("Invalid session: No player UUID!"));
     }
 }

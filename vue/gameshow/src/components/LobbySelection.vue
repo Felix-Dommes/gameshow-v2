@@ -12,6 +12,10 @@
         <span class="error">{{ error_msg }}</span>
         <br>
       </template>
+      <template v-if="notFound">
+        <span class="error">{{ lang["Lobby ID was not found!"] }}</span>
+        <br>
+      </template>
       <input type="submit" :value="lang['Join']" id="lobby-join" class="button">
     </form>
   </div>
@@ -20,7 +24,7 @@
 <script>
 export default {
   name: "LobbySelection",
-  props: ["lang"],
+  props: ["lang", "not-found"],
   data: function () {
     return {
       lobby_id: "",

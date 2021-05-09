@@ -5,6 +5,8 @@
     <div class="mainWindow">
       <!-- side bar for player list and status etc -->
       <div class="sidebar">
+        <!-- TODO language switch -->
+        
         <template v-if="nickname != '' && lobby != ''">
           <transition name="transition" mode="out-in" appear>
             <div class="compWindow" style="text-align: center;">
@@ -12,7 +14,7 @@
             </div>
           </transition>
           
-          <!--
+          <!-- TODO
           <transition name="transition" mode="out-in" appear>
             <player-list :players="players" :self="nickname" :question-type="current_question.type"></player-list>
           </transition>
@@ -34,8 +36,13 @@
           </template>
           
           <template v-else-if="selectedWindow == 'lobby-selection'">
-            <lobby-selection :lang="lang" @create-lobby="create_lobby" @join-lobby="join_lobby" />
+            <lobby-selection :lang="lang" :not-found="param_not_found" @create-lobby="create_lobby" @join-lobby="join_lobby" />
           </template>
+          
+          <!-- TODO
+            selectedWindow == 'lobby-menu' (+leave button)
+            ...
+          -->
           
           <template v-else>
             <div class="compWindow">
@@ -78,6 +85,8 @@ export default
     results_players_new: [],
     current_question: {id: 0, type: "", category: "", question: "", answers: [], correct_answer: 0, wrong_answers: []},
     last_event_id: -1,
+    
+    param_not_found: false,
   }; },
   methods: {
     switchLanguage: function(language)
@@ -136,20 +145,31 @@ export default
     create_lobby: async function()
     {
       if (!this.consent) return;
-      //TODO
-      //successful: set selectedWindow
-      //set this.admin
-      //deal with same name problem
+      let result = await api.create_lobby();
+      if (!result.valid) return;
+      let lobby_id = result.lobby_id;
+      result = await api.join_lobby(lobby_id);
+      this.param_not_found = result.not_found;
+      if (!result.valid) return;
+      this.lobby = lobby_id;
+      this.admin = result.admin;
+      this.nickname = result.new_name;
+      window.history.pushState("lobby", "Gameshow Lobby", "#" + lobby_id);
+      this.selectedWindow = "lobby-menu";
     },
     join_lobby: async function(lobby_id)
     {
       if (!this.consent) return false;
-      //TODO
       if (lobby_id == "") return false;
-      //successful: set selectedWindow and return true;
-      //set this.admin
-      //deal with same name problem
-      return false;
+      let result = await api.join_lobby(lobby_id);
+      this.param_not_found = result.not_found;
+      if (!result.valid) return false;
+      this.lobby = lobby_id;
+      this.admin = result.admin;
+      this.nickname = result.new_name;
+      window.history.pushState("lobby", "Gameshow Lobby", "#" + lobby_id);
+      this.selectedWindow = "lobby-menu";
+      return true;
     },
   },
   mounted: function()

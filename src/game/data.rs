@@ -29,6 +29,7 @@ pub struct Question
 #[derive(Serialize, Deserialize, Clone)]
 pub struct PlayerData
 {
+    pub uuid: String,
     pub name: String,
     pub jokers: usize,
     pub money: i64,
@@ -107,6 +108,7 @@ pub enum EventType
     BeginVersusQAnswering(EventBeginVersusQAnswering),
     ShowResults(EventShowResults),
     GameEnding(EventGameEnding),
+    BackToMenu(()),
 }
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Event
@@ -117,8 +119,9 @@ pub struct Event
 }
 
 #[derive(Serialize, Deserialize, Copy, Clone, PartialEq)]
-pub enum QuestionState
+pub enum LobbyState
 { //the bool indicates if it is ready to transition to next state
+    Menu(bool),
     Results(bool),
     NormalQAnswering(bool),
     BettingQBetting(bool),

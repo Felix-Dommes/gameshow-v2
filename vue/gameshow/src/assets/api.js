@@ -33,4 +33,33 @@ export default {
             return await response.text();
         }
     },
+    //create new lobby
+    create_lobby: async function()
+    {
+        let response = await fetch(apiPath + "create_lobby");
+        if (!response.ok) {
+            let body = await response.text();
+            alert(`${this.lang["Connection to server failed!"]} \n ${response.status} ${response.statusText} \n ${body}`);
+            return { valid: false };
+        }
+        else {
+            let data = await response.text();
+            return { valid: true, lobby_id: data };
+        }
+    },
+    //join an existing lobby
+    join_lobby: async function(uuid)
+    {
+        let response = await fetch(apiPath + "join_lobby?uuid=" + encodeURIComponent(uuid));
+        if (!response.ok) {
+            let body = await response.text();
+            if (response.status == 404) return { valid: false, not_found: true, msg: body };
+            alert(`${this.lang["Connection to server failed!"]} \n ${response.status} ${response.statusText} \n ${body}`);
+            return { valid: false, not_found: false };
+        }
+        else {
+            let data = await response.json();
+            return { valid: true, not_found: false, admin: data.admin, new_name: data.new_name };
+        }
+    },
 }

@@ -15,6 +15,7 @@ export default {
         "Join": "Join",
         "Lobby ID must not be empty!": "Lobby ID must not be empty!",
         "Join lobby": "Join lobby",
+        "Lobby ID was not found!": "Lobby ID was not found!",
     },
     de: {
         "Accept": "Akzeptieren",
@@ -31,5 +32,6 @@ export default {
         "Join": "Beitreten",
         "Lobby ID must not be empty!": "Lobby ID darf nicht leer sein!",
         "Join lobby": "Lobby beitreten",
+        "Lobby ID was not found!": "Lobby ID wurde nicht gefunden!",
     },
 }
