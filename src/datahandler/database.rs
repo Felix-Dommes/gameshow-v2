@@ -52,7 +52,7 @@ impl DataBase
         }
     }
     
-    pub fn create_lobby(&mut self, admin: String) -> String
+    pub fn create_lobby(&mut self, admin_uuid: String, admin_name: String) -> String
     {
         //be sure UUID is REALLY unique
         let mut uuid = String::from("");
@@ -62,7 +62,7 @@ impl DataBase
         }
         
         //add lobby
-        self.lobbies.insert(uuid.clone(), Arc::new(Gameshow::new(admin)));
+        self.lobbies.insert(uuid.clone(), Arc::new(Gameshow::new(admin_uuid, admin_name)));
         //return UUID
         uuid
     }

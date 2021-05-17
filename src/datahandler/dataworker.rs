@@ -14,7 +14,7 @@ pub enum DataAccess
     CreatePlayer(oneshot::Sender<String>, String),
     SetPlayerName(oneshot::Sender<bool>, String, String),
     GetPlayerName(oneshot::Sender<Option<String>>, String),
-    CreateLobby(oneshot::Sender<String>, String),
+    CreateLobby(oneshot::Sender<String>, String, String),
     GetLobby(oneshot::Sender<Option<Arc<Gameshow>>>, String),
 }
 
@@ -59,8 +59,8 @@ impl DataWorker
                     let result = self.db.get_player_name(uuid);
                     result_sender.send(result).ok();
                 },
-                DataAccess::CreateLobby(result_sender, admin_uuid) => {
-                    let result = self.db.create_lobby(admin_uuid);
+                DataAccess::CreateLobby(result_sender, admin_uuid, admin_name) => {
+                    let result = self.db.create_lobby(admin_uuid, admin_name);
                     result_sender.send(result).ok();
                 },
                 DataAccess::GetLobby(result_sender, uuid) => {

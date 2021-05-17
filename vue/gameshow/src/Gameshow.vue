@@ -154,6 +154,7 @@ export default
       this.lobby = lobby_id;
       this.admin = result.admin;
       this.nickname = result.new_name;
+      //TODO: dont always join, connect to event stream
       window.history.pushState("lobby", "Gameshow Lobby", "#" + lobby_id);
       this.selectedWindow = "lobby-menu";
     },
@@ -167,6 +168,7 @@ export default
       this.lobby = lobby_id;
       this.admin = result.admin;
       this.nickname = result.new_name;
+      //TODO: connect to event stream
       window.history.pushState("lobby", "Gameshow Lobby", "#" + lobby_id);
       this.selectedWindow = "lobby-menu";
       return true;

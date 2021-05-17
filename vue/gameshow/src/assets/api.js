@@ -30,7 +30,7 @@ export default {
             return "";
         }
         else {
-            return await response.text();
+            return await response.json();
         }
     },
     //create new lobby
@@ -43,7 +43,7 @@ export default {
             return { valid: false };
         }
         else {
-            let data = await response.text();
+            let data = await response.json();
             return { valid: true, lobby_id: data };
         }
     },
@@ -62,4 +62,18 @@ export default {
             return { valid: true, not_found: false, admin: data.admin, new_name: data.new_name };
         }
     },
+    //get a lobby's events
+    get_events: async function(lobby_id)
+    {
+        let response = await fetch(apiPath + "get_events?lobby_id=" + encodeURIComponent(lobby_id));
+        if (!response.ok) {
+            let body = await response.text();
+            alert(`${this.lang["Connection to server failed!"]} \n ${response.status} ${response.statusText} \n ${body}`);
+            return [];
+        }
+        else {
+            let data = await response.json();
+            return data;
+        }
+    }
 }

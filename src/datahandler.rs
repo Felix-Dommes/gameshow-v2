@@ -51,10 +51,10 @@ impl DataHandler
     }
     
     /// Create a new lobby with the provided UUID as admin
-    pub async fn create_lobby(&self, admin_uuid: String) -> Result<String, &'static str>
+    pub async fn create_lobby(&self, admin_uuid: String, admin_name: String) -> Result<String, &'static str>
     {
         let (result_sender, result_receiver) = oneshot::channel();
-        self.sender.send(DataAccess::CreateLobby(result_sender, admin_uuid)).await.map_err(|_err| "db send data access error (dropped channel)")?;
+        self.sender.send(DataAccess::CreateLobby(result_sender, admin_uuid, admin_name)).await.map_err(|_err| "db send data access error (dropped channel)")?;
         result_receiver.await.map_err(|_err| "db receive data access result error (dropped channel)")
     }
     
