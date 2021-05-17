@@ -1,7 +1,7 @@
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::time::Duration;
-use futures::{Stream, StreamExt};
+use futures::Stream;
 use actix_web::{web, error, get, HttpRequest, HttpResponse, Responder};
 use actix_web::Result as HttpResult;
 use actix_session::Session;
