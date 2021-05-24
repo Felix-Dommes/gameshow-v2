@@ -16,7 +16,7 @@
           
           <!-- TODO
           <transition name="transition" mode="out-in" appear>
-            <player-list :players="players" :self="nickname" :question-type="current_question.type"></player-list>
+            <player-list :lang="lang" :players="players" :self="nickname" :question-type="current_question.type"></player-list>
           </transition>
           -->
         </template>
@@ -39,8 +39,11 @@
             <lobby-selection :lang="lang" :not-found="param_not_found" @create-lobby="create_lobby" @join-lobby="join_lobby" />
           </template>
           
+          <template v-else-if="selectedWindow == 'lobby-menu'">
+            <lobby-menu :lang="lang" />
+          </template>
+          
           <!-- TODO
-            selectedWindow == 'lobby-menu' (+leave button)
             ...
           -->
           
@@ -62,6 +65,7 @@ import api from './assets/api.js'
 import CookieConsent from './components/CookieConsent.vue'
 import LoginWindow from './components/LoginWindow.vue'
 import LobbySelection from './components/LobbySelection.vue'
+import LobbyMenu from './components/LobbyMenu.vue'
 
 export default
 {
@@ -70,14 +74,17 @@ export default
     CookieConsent,
     LoginWindow,
     LobbySelection,
+    LobbyMenu,
   },
   data: () => { return {
     lang: lang.en,
     consent: false,
     selectedWindow: "loading",
+    my_uuid: "",
     nickname: "",
     lobby: "",
     admin: "",
+    admin_plays: true, //only local, don't use on non-admin clients
     money: 1,
     jokers: 0,
     players: [],
@@ -109,8 +116,9 @@ export default
     {
       this.consent = true;
       //check if already logged in
-      let name = await api.get_name();
-      if (name != "") {
+      let [name, uuid] = await api.get_name();
+      if (name != "" && uuid != "") {
+        this.my_uuid = uuid;
         this.nickname = name;
         let lobby_id = global.extract_lobby_id();
         if (lobby_id != "")
@@ -129,7 +137,9 @@ export default
     set_name: async function(name)
     {
       if (!this.consent) return;
-      if (await api.set_name(name)) {
+      const uuid = await api.set_name(name);
+      if (uuid != "") {
+        this.my_uuid = uuid;
         this.nickname = name;
         let lobby_id = global.extract_lobby_id();
         if (lobby_id != "")
@@ -154,7 +164,7 @@ export default
       this.lobby = lobby_id;
       this.admin = result.admin;
       this.nickname = result.new_name;
-      //TODO: dont always join, connect to event stream
+      //TODO: dont always join?; connect to event stream
       window.history.pushState("lobby", "Gameshow Lobby", "#" + lobby_id);
       this.selectedWindow = "lobby-menu";
     },
