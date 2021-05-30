@@ -13,6 +13,7 @@ pub fn config(cfg: &mut web::ServiceConfig)
         .service(get_name)
         .service(create_lobby)
         .service(join_lobby)
+        .service(leave_lobby)
         .service(get_events);
 }
 
@@ -146,6 +147,43 @@ async fn join_lobby(db: web::Data<DataHandler>, session: Session, request: HttpR
         else
         {
             return Err(error::ErrorBadRequest("Invalid UUID: Player UUID not found in database!"));
+        }
+    }
+    else
+    {
+        return Err(error::ErrorUnauthorized("Invalid session: No player UUID!"));
+    }
+}
+
+// Leave a lobby
+#[derive(Serialize, Deserialize)]
+struct LeaveLobbyData
+{
+    uuid: String,
+}
+#[get("/leave_lobby")]
+async fn leave_lobby(db: web::Data<DataHandler>, session: Session, request: HttpRequest, params: web::Query<LeaveLobbyData>) -> HttpResult<HttpResponse>
+{
+    ensure_cookie_consent(&request)?;
+    
+    if let Some(uuid) = session.get::<String>("uuid")?
+    {
+        let db_lobby = db.get_lobby(params.uuid.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        if db_lobby.is_some()
+        {
+            let lobby = db_lobby.unwrap();
+            if lobby.leave(uuid).await
+            {
+                return Ok(HttpResponse::Ok().finish())
+            }
+            else
+            {
+                return Err(error::ErrorNotFound("You did not join before!"));
+            }
+        }
+        else
+        {
+            return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
         }
     }
     else

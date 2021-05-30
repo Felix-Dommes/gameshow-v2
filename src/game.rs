@@ -237,9 +237,13 @@ impl Gameshow
         }
     }
     
-    pub async fn leave(&self, uuid: String) -> ()
+    pub async fn leave(&self, uuid: String) -> bool
     {
-        //TODO: implement
+        let mut player_access = self.player_data.write().await;
+        //TODO check if retain does the right thing
+        let res = (*player_access).retain(|player| player.uuid != uuid);
+        //TODO: check if something was removed and return the respective bool (true = succesful)
+        true
     }
 }
 
