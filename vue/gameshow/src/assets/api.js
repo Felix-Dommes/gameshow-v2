@@ -62,6 +62,20 @@ export default {
             return { valid: true, not_found: false, admin: data.admin, new_name: data.new_name };
         }
     },
+    //leave a lobby
+    leave_lobby: async function(uuid)
+    {
+        let response = await fetch(apiPath + "leave_lobby?uuid=" + encodeURIComponent(uuid));
+        if (!response.ok) {
+            let body = await response.text();
+            if (response.status == 404) return false; //keep or remove?
+            alert(`${this.lang["Connection to server failed!"]} \n ${response.status} ${response.statusText} \n ${body}`);
+            return false;
+        }
+        else {
+            return true;
+        }
+    },
     //get a lobby's events
     get_events: async function(lobby_id)
     {

@@ -237,9 +237,16 @@ impl Gameshow
         }
     }
     
-    pub async fn leave(&self, uuid: String) -> ()
+    pub async fn leave(&self, uuid: String) -> bool
     {
-        //TODO: implement
+        let mut player_access = self.player_data.write().await;
+        let contained = (*player_access).iter().any(|player| player.uuid == uuid);
+        (*player_access).retain(|player| player.uuid != uuid);
+        contained
+        
+        //in the future when drain_filter is not experimental anymore
+        //let removed = (*player_access).drain_filter(|player| player.uuid != uuid);
+        //removed.count() != 0
     }
 }
 
