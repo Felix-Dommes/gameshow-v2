@@ -240,10 +240,13 @@ impl Gameshow
     pub async fn leave(&self, uuid: String) -> bool
     {
         let mut player_access = self.player_data.write().await;
-        //TODO check if retain does the right thing
-        let res = (*player_access).retain(|player| player.uuid != uuid);
-        //TODO: check if something was removed and return the respective bool (true = succesful)
-        true
+        let contained = (*player_access).iter().any(|player| player.uuid == uuid);
+        (*player_access).retain(|player| player.uuid != uuid);
+        contained
+        
+        //in the future when drain_filter is not experimental anymore
+        //let removed = (*player_access).drain_filter(|player| player.uuid != uuid);
+        //removed.count() != 0
     }
 }
 
