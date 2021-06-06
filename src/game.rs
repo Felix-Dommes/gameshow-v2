@@ -18,8 +18,8 @@ const NORMAL_Q_MONEY:i64 = 500; //money to get when answering a normal question 
 const ESTIMATION_Q_MONEY:i64 = 1000; //money to get when winning a estimation question
 
 
-//object for one gameshow lobby; includes all necessary data
-//lock order to avoid deadlocks: admin -> open -> current_question_state -> questions -> player_data -> game_events
+//object for one gameshow lobby; includes all necessary data and methods to interact
+//lock order to avoid deadlocks: admin -> open -> question_set -> current_question_state -> questions -> player_data -> game_events
 pub struct Gameshow
 {
     //data related to lobby
@@ -29,6 +29,7 @@ pub struct Gameshow
     param_initial_jokers: AtomicUsize, //see respective constants
     param_normal_q_money: AtomicI64, //see respective constants
     param_estimation_q_money: AtomicI64, //see respective constants
+    question_set: RwLock<String>, //name of selected questions
     
     //data related to the game
     player_data: RwLock<Vec<PlayerData>>,
@@ -49,6 +50,7 @@ impl Gameshow
             param_initial_jokers: AtomicUsize::new(INITIAL_JOKERS),
             param_normal_q_money: AtomicI64::new(NORMAL_Q_MONEY),
             param_estimation_q_money: AtomicI64::new(ESTIMATION_Q_MONEY),
+            question_set: RwLock::new(String::new()),
             
             player_data: RwLock::new(Vec::new()),
             questions: RwLock::new(Vec::new()),
@@ -85,27 +87,9 @@ impl Gameshow
         *open_access
     }
     
-    pub async fn set_open(&self, open: bool) -> &Self
-    {
-        {
-            let mut open_access = self.open.write().await;
-            (*open_access) = open;
-        }
-        self
-    }
-    
     pub fn get_initial_money(&self) -> i64
     {
         self.param_initial_money.load(Ordering::Relaxed)
-    }
-    
-    pub fn set_initial_money(&self, initial_money: i64) -> &Self
-    {
-        if initial_money >= 0
-        {
-            self.param_initial_money.store(initial_money, Ordering::Relaxed);
-        }
-        self
     }
     
     pub fn get_initial_jokers(&self) -> usize
@@ -113,24 +97,9 @@ impl Gameshow
         self.param_initial_jokers.load(Ordering::Relaxed)
     }
     
-    pub fn set_initial_jokers(&self, initial_jokers: usize) -> &Self
-    {
-        self.param_initial_jokers.store(initial_jokers, Ordering::Relaxed);
-        self
-    }
-    
     pub fn get_normal_q_money(&self) -> i64
     {
         self.param_normal_q_money.load(Ordering::Relaxed)
-    }
-    
-    pub fn set_normal_q_money(&self, normal_q_money: i64) -> &Self
-    {
-        if normal_q_money > 0
-        {
-            self.param_normal_q_money.store(normal_q_money, Ordering::Relaxed);
-        }
-        self
     }
     
     pub fn get_estimation_q_money(&self) -> i64
@@ -138,12 +107,84 @@ impl Gameshow
         self.param_estimation_q_money.load(Ordering::Relaxed)
     }
     
-    pub fn set_estimation_q_money(&self, estimation_q_money: i64) -> &Self
+    pub async fn get_question_set(&self) -> String
     {
+        let question_set_access = self.question_set.read().await;
+        (*question_set_access).clone()
+    }
+    
+    pub async fn set_open(&self, open: bool) -> &Self
+    {
+        { //set new preference
+            let mut open_access = self.open.write().await;
+            (*open_access) = open;
+        }
+        
+        //send update event to clients
+        let event = EventType::LobbySettingsUpdate(EventLobbySettingsUpdate {
+            open: self.is_open().await,
+            initial_money: self.get_initial_money(),
+            initial_jokers: self.get_initial_jokers(),
+            normal_q_money: self.get_normal_q_money(),
+            estimation_q_money: self.get_estimation_q_money(),
+            question_set: self.get_question_set().await,
+        });
+        self.game_events.write().await.add(event);
+        
+        self
+    }
+    
+    pub async fn update_preferences(&self, initial_money: i64, initial_jokers: usize, normal_q_money: i64, estimation_q_money: i64) -> &Self
+    {
+        if initial_money >= 0
+        {
+            self.param_initial_money.store(initial_money, Ordering::Relaxed);
+        }
+        
+        self.param_initial_jokers.store(initial_jokers, Ordering::Relaxed);
+        
+        if normal_q_money > 0
+        {
+            self.param_normal_q_money.store(normal_q_money, Ordering::Relaxed);
+        }
+        
         if estimation_q_money > 0
         {
             self.param_estimation_q_money.store(estimation_q_money, Ordering::Relaxed);
         }
+        
+        //send update event to clients
+        let event = EventType::LobbySettingsUpdate(EventLobbySettingsUpdate {
+            open: self.is_open().await,
+            initial_money: self.get_initial_money(),
+            initial_jokers: self.get_initial_jokers(),
+            normal_q_money: self.get_normal_q_money(),
+            estimation_q_money: self.get_estimation_q_money(),
+            question_set: self.get_question_set().await,
+        });
+        self.game_events.write().await.add(event);
+        
+        self
+    }
+    
+    pub async fn set_question_set(&self, question_set: String) -> &Self
+    {
+        { //update preference
+            let mut question_set_access = self.question_set.write().await;
+            (*question_set_access) = question_set;
+        }
+        
+        //send update event to clients
+        let event = EventType::LobbySettingsUpdate(EventLobbySettingsUpdate {
+            open: self.is_open().await,
+            initial_money: self.get_initial_money(),
+            initial_jokers: self.get_initial_jokers(),
+            normal_q_money: self.get_normal_q_money(),
+            estimation_q_money: self.get_estimation_q_money(),
+            question_set: self.get_question_set().await,
+        });
+        self.game_events.write().await.add(event);
+        
         self
     }
     
@@ -243,17 +284,21 @@ impl Gameshow
         let contained = (*player_access).iter().any(|player| player.uuid == uuid);
         (*player_access).retain(|player| player.uuid != uuid);
         contained
-        
         //in the future when drain_filter is not experimental anymore
         //let removed = (*player_access).drain_filter(|player| player.uuid != uuid);
         //removed.count() != 0
     }
+    
+    //TODO:
+    //make PlayerListUpdate events when joined, leaved, answered, bet, etc.
+    //answer, bet functions etc.
+    //question selection and loading
 }
 
 
 //struct for player data
 #[derive(Serialize, Deserialize, Clone)]
-struct PlayerData
+pub struct PlayerData
 {
     uuid: String,
     name: String,

@@ -65,57 +65,77 @@ impl EventManager
 #[derive(Serialize, Deserialize, Clone)]
 pub struct EventBeginNormalQAnswering
 {
-    question_type: QuestionType,
-    current_question: usize,
-    category: String,
-    question: String,
-    answers: Vec<String>,
+    pub question_type: QuestionType,
+    pub current_question: usize,
+    pub category: String,
+    pub question: String,
+    pub answers: Vec<String>,
 }
 #[derive(Serialize, Deserialize, Clone)]
 pub struct EventBeginBettingQBetting
 {
-    question_type: QuestionType,
-    current_question: usize,
-    category: String,
+    pub question_type: QuestionType,
+    pub current_question: usize,
+    pub category: String,
 }
 #[derive(Serialize, Deserialize, Clone)]
 pub struct EventBeginBettingQAnswering
 {
-    question: String,
-    answers: Vec<String>,
+    pub question: String,
+    pub answers: Vec<String>,
 }
 #[derive(Serialize, Deserialize, Clone)]
 pub struct EventBeginEstimationQAnswering
 {
-    question_type: QuestionType,
-    current_question: usize,
-    category: String,
-    question: String,
+    pub question_type: QuestionType,
+    pub current_question: usize,
+    pub category: String,
+    pub question: String,
 }
 #[derive(Serialize, Deserialize, Clone)]
 pub struct EventBeginVersusQSelecting
 {
-    question_type: QuestionType,
-    current_question: usize,
-    category: String,
+    pub question_type: QuestionType,
+    pub current_question: usize,
+    pub category: String,
 }
 #[derive(Serialize, Deserialize, Clone)]
 pub struct EventBeginVersusQAnswering
 {
-    question: String,
-    answers: Vec<String>,
+    pub question: String,
+    pub answers: Vec<String>,
 }
 #[derive(Serialize, Deserialize, Clone)]
 pub struct EventShowResults
 {
-    correct_answer: usize,
-    previous_player_data: Vec<PlayerData>,
-    player_data: Vec<PlayerData>,
+    pub correct_answer: usize,
+    pub previous_player_data: Vec<PlayerData>,
+    pub player_data: Vec<PlayerData>,
 }
 #[derive(Serialize, Deserialize, Clone)]
 pub struct EventGameEnding
 {
-    player_data: Vec<PlayerData>,
+    pub player_data: Vec<PlayerData>,
+}
+#[derive(Serialize, Deserialize, Clone)]
+pub struct EventBackToMenu
+{
+    pub open: bool,
+}
+#[derive(Serialize, Deserialize, Clone)]
+pub struct EventPlayerListUpdate
+{
+    pub player_data: Vec<PlayerData>,
+}
+#[derive(Serialize, Deserialize, Clone)]
+pub struct EventLobbySettingsUpdate
+{
+    pub open: bool,
+    pub initial_money: i64,
+    pub initial_jokers: usize,
+    pub normal_q_money: i64,
+    pub estimation_q_money: i64,
+    pub question_set: String,
 }
 //combining struct for events
 #[derive(Serialize, Deserialize, Clone)]
@@ -129,7 +149,9 @@ pub enum EventType
     BeginVersusQAnswering(EventBeginVersusQAnswering),
     ShowResults(EventShowResults),
     GameEnding(EventGameEnding),
-    BackToMenu(()),
+    BackToMenu(EventBackToMenu),
+    PlayerListUpdate(EventPlayerListUpdate),
+    LobbySettingsUpdate(EventLobbySettingsUpdate),
 }
 
 impl fmt::Display for EventType
@@ -147,6 +169,8 @@ impl fmt::Display for EventType
             EventType::ShowResults(_) => write!(f, "ShowResults"),
             EventType::GameEnding(_) => write!(f, "GameEnding"),
             EventType::BackToMenu(_) => write!(f, "BackToMenu"),
+            EventType::PlayerListUpdate(_) => write!(f, "PlayerListUpdate"),
+            EventType::LobbySettingsUpdate(_) => write!(f, "LobbySettingsUpdate"),
         }
     }
 }

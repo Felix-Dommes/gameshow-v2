@@ -40,7 +40,7 @@
           </template>
           
           <template v-else-if="selectedWindow == 'lobby-menu'">
-            <lobby-menu :lang="lang" />
+            <lobby-menu :lang="lang" :admin="my_uuid == admin" />
           </template>
           
           <!-- TODO
@@ -91,7 +91,7 @@ export default
     results_players_prev: [],
     results_players_new: [],
     current_question: {id: 0, type: "", category: "", question: "", answers: [], correct_answer: 0, wrong_answers: []},
-    last_event_id: -1,
+    last_event_id: -1, //TODO process events only in order: no > last_event_id, but = last_event_id + 1
     
     param_not_found: false,
   }; },
@@ -164,7 +164,7 @@ export default
       this.lobby = lobby_id;
       this.admin = result.admin;
       this.nickname = result.new_name;
-      //TODO: dont always join?; connect to event stream
+      //TODO: dont always join?; connect to event stream and retrieve previous events
       window.history.pushState("lobby", "Gameshow Lobby", "#" + lobby_id);
       this.selectedWindow = "lobby-menu";
     },
@@ -178,7 +178,7 @@ export default
       this.lobby = lobby_id;
       this.admin = result.admin;
       this.nickname = result.new_name;
-      //TODO: connect to event stream
+      //TODO: connect to event stream and retrieve previous events
       window.history.pushState("lobby", "Gameshow Lobby", "#" + lobby_id);
       this.selectedWindow = "lobby-menu";
       return true;

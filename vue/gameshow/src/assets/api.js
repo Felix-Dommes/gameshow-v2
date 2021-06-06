@@ -24,10 +24,10 @@ export default {
     {
         let response = await fetch(apiPath + "get_name");
         if (!response.ok) {
-            if (response.status == 404) return "";
+            if (response.status == 404) return ["", ""];
             let body = await response.text();
             alert(`${this.lang["Connection to server failed!"]} \n ${response.status} ${response.statusText} \n ${body}`);
-            return "";
+            return ["", ""];
         }
         else {
             return await response.json();
@@ -96,5 +96,32 @@ export default {
         const url = eventPath + lobby_id;
         const eventStream = new EventSource(url);
         return eventStream;
+    },
+    //update lobby preferences
+    update_lobby: async function(lobby_id, open, initial_money, initial_jokers, normal_q_money, estimation_q_money, question_set)
+    {
+        const params = {
+            lobby_id: lobby_id,
+            open: open,
+            initial_money: initial_money,
+            initial_jokers: initial_jokers,
+            normal_q_money: normal_q_money,
+            estimation_q_money: estimation_q_money,
+            question_set: question_set
+        };
+        const request = {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(params)
+        };
+        let response = await fetch(apiPath + "update_lobby", request);
+        if (!response.ok) {
+            let body = await response.text();
+            alert(`${this.lang["Connection to server failed!"]} \n ${response.status} ${response.statusText} \n ${body}`);
+            return false;
+        }
+        else {
+            return true;
+        }
     },
 }

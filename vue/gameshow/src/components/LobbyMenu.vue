@@ -41,7 +41,7 @@
 <script>
 export default {
   name: "LobbyMenu",
-  props: ["lang"],
+  props: ["lang", "admin"],
   data: function () {
     return {
       //

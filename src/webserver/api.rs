@@ -2,6 +2,7 @@ use actix_web::{web, error, get, post, HttpRequest, HttpResponse, Responder};
 use actix_web::Result as HttpResult;
 use actix_session::Session;
 use serde::{Serialize, Deserialize};
+use futures::join;
 
 use crate::datahandler::DataHandler;
 use super::ensure_cookie_consent;
@@ -14,11 +15,10 @@ pub fn config(cfg: &mut web::ServiceConfig)
         .service(create_lobby)
         .service(join_lobby)
         .service(leave_lobby)
-        .service(get_events);
+        .service(get_events)
+        .service(update_lobby);
 }
 
-
-//HttpResponse::NoContent() //use as HttpResponse::Ok() when there is no body
 
 // Set the current user's name; if not logged in, create new user
 #[derive(Serialize, Deserialize)]
@@ -174,7 +174,7 @@ async fn leave_lobby(db: web::Data<DataHandler>, session: Session, request: Http
             let lobby = db_lobby.unwrap();
             if lobby.leave(uuid).await
             {
-                return Ok(HttpResponse::Ok().finish())
+                return Ok(HttpResponse::NoContent().finish())
             }
             else
             {
@@ -212,5 +212,52 @@ async fn get_events(db: web::Data<DataHandler>, session: Session, request: HttpR
     else
     {
         return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
+    }
+}
+
+// Update the lobby preferences
+#[derive(Serialize, Deserialize)]
+struct UpdateLobbyData
+{
+    lobby_id: String,
+    open: bool,
+    initial_money: i64,
+    initial_jokers: usize,
+    normal_q_money: i64,
+    estimation_q_money: i64,
+    question_set: String,
+}
+#[post("/update_lobby")]
+async fn update_lobby(db: web::Data<DataHandler>, session: Session, request: HttpRequest, params: web::Json<UpdateLobbyData>) -> HttpResult<HttpResponse>
+{
+    ensure_cookie_consent(&request)?;
+    
+    if let Some(uuid) = session.get::<String>("uuid")?
+    {
+        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        if db_lobby.is_some()
+        {
+            let lobby = db_lobby.unwrap();
+            if lobby.get_admin_uuid().await == uuid
+            {
+                join!(lobby.set_open(params.open),
+                    lobby.update_preferences(params.initial_money, params.initial_jokers, params.normal_q_money, params.estimation_q_money),
+                    lobby.set_question_set(params.question_set.clone()));
+                //TODO handle custom question uploading and given-set loading somewhere
+                return Ok(HttpResponse::NoContent().finish());
+            }
+            else
+            {
+                return Err(error::ErrorUnauthorized("You are not the lobby admin!"));
+            }
+        }
+        else
+        {
+            return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
+        }
+    }
+    else
+    {
+        return Err(error::ErrorUnauthorized("Invalid session: No player UUID!"));
     }
 }
