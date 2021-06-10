@@ -7,8 +7,9 @@ mod questions;
 mod events;
 
 pub use events::Event;
+pub use questions::find_question_files;
 
-use questions::*;
+use questions::{Question, QuestionType};
 use events::*;
 
 //standard parameters for the game
@@ -293,6 +294,8 @@ impl Gameshow
     //make PlayerListUpdate events when joined, leaved, answered, bet, etc.
     //answer, bet functions etc.
     //question selection and loading
+    //TODO:
+    //allow to create a custom question set from sent json data
 }
 
 

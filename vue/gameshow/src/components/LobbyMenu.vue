@@ -37,24 +37,35 @@
     <table style="margin-bottom: 1ex;">
       <tr>
         <td><label for="initial-money">{{ lang['Initial money'] }}: </label></td>
-        <td><input type="text" name="initial-money" v-model="initial_money" :disabled="!admin"></td>
+        <td><input type="text" name="initial-money" v-model.number="initial_money" :disabled="!admin"></td>
       </tr>
       <tr>
         <td><label for="initial-jokers">{{ lang['Jokers'] }}: </label></td>
-        <td><input type="text" name="initial-jokers" v-model="initial_jokers" :disabled="!admin"></td>
+        <td><input type="text" name="initial-jokers" v-model.number="initial_jokers" :disabled="!admin"></td>
       </tr>
       <tr>
         <td><label for="normal-q-money">{{ lang['Normal question reward'] }}: </label></td>
-        <td><input type="text" name="normal-q-money" v-model="normal_q_money" :disabled="!admin"></td>
+        <td><input type="text" name="normal-q-money" v-model.number="normal_q_money" :disabled="!admin"></td>
       </tr>
       <tr>
         <td><label for="estimation-q-money">{{ lang['Estimation question reward'] }}: </label></td>
-        <td><input type="text" name="estimation-q-money" v-model="estimation_q_money" :disabled="!admin"></td>
+        <td><input type="text" name="estimation-q-money" v-model.number="estimation_q_money" :disabled="!admin"></td>
       </tr>
     </table>
     
     <div style="margin-bottom: 1em;">
-      <!-- question selection -->
+      <label for="question-set">{{ lang['Question set'] }}: </label>
+      <select name="question-set" v-model="question_set">
+        <option value="" disabled>{{ lang['Select one'] }}</option>
+        <option v-for="set in question_sets" :key="set" :value="set">{{ set }}</option>
+        <option value="custom">{{ lang['Custom'] }}</option>
+      </select>
+      <template v-if="question_set == 'custom'">
+        <br>
+        <a href="questions-example.json">{{ lang['Download example'] }}</a>
+        <br>
+        <!-- TODO upload question file -->
+      </template>
     </div>
     
     <input type="button" id="start" :value="lang['Start game']" :disabled="!admin">
@@ -64,7 +75,7 @@
 <script>
 export default {
   name: "LobbyMenu",
-  props: ["lang", "admin"],
+  props: ["lang", "admin", "question_sets"],
   data: function () {
     return {
       invite_link: window.location.href,
@@ -75,6 +86,7 @@ export default {
       initial_jokers: "3",
       normal_q_money: "500",
       estimation_q_money: "1000",
+      question_set: "",
     };
   },
   methods: {
@@ -126,6 +138,19 @@ input[type=checkbox]
   margin: 1ex;
   position: relative;
   top: -0.5ex;
+}
+
+select
+{
+  transform: scale(1.5);
+  margin: 1ex 3em;
+  position: relative;
+  top: -0.5ex;
+}
+
+a
+{
+  font-size: 60%;
 }
 
 .error

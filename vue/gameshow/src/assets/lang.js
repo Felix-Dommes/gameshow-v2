@@ -26,6 +26,10 @@ export default {
         "Normal question reward": "Normal question reward",
         "Estimation question reward": "Estimation question reward",
         "Copy": "Copy",
+        "Question set": "Question set",
+        "Select one": "Select one",
+        "Custom": "Custom",
+        "Download example": "Download example file",
     },
     de: {
         "Accept": "Akzeptieren",
@@ -53,5 +57,9 @@ export default {
         "Normal question reward": "Belohnung für normale Fragen",
         "Estimation question reward": "Belohnung für Schätzfragen",
         "Copy": "Kopieren",
+        "Question set": "Fragenkatalog",
+        "Select one": "Wähle aus",
+        "Custom": "Eigene",
+        "Download example": "Downloade Beispieldatei",
     },
 }

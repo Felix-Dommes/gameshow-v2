@@ -33,6 +33,19 @@ export default {
             return await response.json();
         }
     },
+    //retrieve a list of question sets (for lobby menu)
+    get_question_sets: async function()
+    {
+        let response = await fetch(apiPath + "get_question_sets");
+        if (!response.ok) {
+            let body = await response.text();
+            alert(`${this.lang["Connection to server failed!"]} \n ${response.status} ${response.statusText} \n ${body}`);
+            return [];
+        }
+        else {
+            return await response.json();
+        }
+    },
     //create new lobby
     create_lobby: async function()
     {

@@ -40,7 +40,7 @@
           </template>
           
           <template v-else-if="selectedWindow == 'lobby-menu'">
-            <lobby-menu :lang="lang" :admin="my_uuid == admin" />
+            <lobby-menu :lang="lang" :admin="my_uuid == admin" :question_sets="question_sets" />
           </template>
           
           <!-- TODO
@@ -78,6 +78,8 @@ export default
   },
   data: () => { return {
     lang: lang.en,
+    question_sets: [],
+    
     consent: false,
     selectedWindow: "loading",
     my_uuid: "",
@@ -184,9 +186,9 @@ export default
       return true;
     },
   },
-  mounted: function()
+  mounted: async function()
   {
-    //TODO?
+    this.question_sets = await api.get_question_sets();
   },
 }
 </script>
