@@ -7,9 +7,8 @@ mod questions;
 mod events;
 
 pub use events::Event;
-pub use questions::find_question_files;
+pub use questions::{Question, QuestionType, find_question_files};
 
-use questions::{Question, QuestionType};
 use events::*;
 
 //standard parameters for the game
@@ -20,7 +19,7 @@ const ESTIMATION_Q_MONEY:i64 = 1000; //money to get when winning a estimation qu
 
 
 //object for one gameshow lobby; includes all necessary data and methods to interact
-//lock order to avoid deadlocks: admin -> open -> question_set -> current_question_state -> questions -> player_data -> game_events
+//lock order to avoid deadlocks: admin -> open -> current_lobby_state -> question_set -> questions -> player_data -> game_events
 pub struct Gameshow
 {
     //data related to lobby
@@ -37,7 +36,7 @@ pub struct Gameshow
     questions: RwLock<Vec<Question>>,
     game_events: RwLock<EventManager>,
     current_question: AtomicUsize,
-    current_question_state: RwLock<LobbyState>,
+    current_lobby_state: RwLock<LobbyState>,
 }
 
 impl Gameshow
@@ -57,7 +56,7 @@ impl Gameshow
             questions: RwLock::new(Vec::new()),
             game_events: RwLock::new(EventManager::new()),
             current_question: AtomicUsize::new(0),
-            current_question_state: RwLock::new(LobbyState::Menu(false)),
+            current_lobby_state: RwLock::new(LobbyState::Menu(false)),
         }
     }
     
@@ -137,6 +136,8 @@ impl Gameshow
     
     pub async fn update_preferences(&self, initial_money: i64, initial_jokers: usize, normal_q_money: i64, estimation_q_money: i64) -> &Self
     {
+        //TODO check lobby state (LobbyMenu)
+        
         if initial_money >= 0
         {
             self.param_initial_money.store(initial_money, Ordering::Relaxed);
@@ -168,11 +169,35 @@ impl Gameshow
         self
     }
     
-    pub async fn set_question_set(&self, question_set: String) -> &Self
+    pub async fn set_question_set(&self, question_set: String) -> std::io::Result<&Self>
     {
-        { //update preference
+        //TODO check lobby state (LobbyMenu)
+        
+        //preload question set (if not custom)
+        let mut questions = Vec::new();
+        if question_set != "custom"
+        {
+            let question_sets = questions::find_question_files()?;
+            for (name, file) in question_sets.iter()
+            {
+                if name == &question_set
+                {
+                    questions = questions::read_questions(file)?;
+                    break;
+                }
+            }
+        }
+        
+        { //update preference and save questions (if not custom)
             let mut question_set_access = self.question_set.write().await;
             (*question_set_access) = question_set;
+            
+            if (*question_set_access) != "custom"
+            {
+                self.current_question.store(0, Ordering::Relaxed);
+                let mut questions_access = self.questions.write().await;
+                (*questions_access) = questions;
+            }
         }
         
         //send update event to clients
@@ -186,7 +211,19 @@ impl Gameshow
         });
         self.game_events.write().await.add(event);
         
-        self
+        Ok(self)
+    }
+    
+    pub async fn set_questions(&self, questions:Vec<Question>) -> std::io::Result<&Self>
+    {
+        //TODO check lobby state (LobbyMenu), so that current question will be set to 1, as 0 would be invalid
+        //TODO check question set (custom)
+        
+        self.current_question.store(0, Ordering::Relaxed);
+        let mut questions_access = self.questions.write().await;
+        (*questions_access) = questions;
+        
+        Ok(self)
     }
     
     pub async fn get_events(&self) -> Vec<Event>
@@ -293,9 +330,6 @@ impl Gameshow
     //TODO:
     //make PlayerListUpdate events when joined, leaved, answered, bet, etc.
     //answer, bet functions etc.
-    //question selection and loading
-    //TODO:
-    //allow to create a custom question set from sent json data
 }
 
 

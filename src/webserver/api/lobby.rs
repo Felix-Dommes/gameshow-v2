@@ -5,6 +5,7 @@ use serde::{Serialize, Deserialize};
 use futures::join;
 
 use crate::datahandler::DataHandler;
+use crate::game;
 use super::ensure_cookie_consent;
 
 
@@ -14,7 +15,8 @@ pub fn config(cfg: &mut web::ServiceConfig)
         .service(join_lobby)
         .service(leave_lobby)
         .service(get_events)
-        .service(update_lobby);
+        .service(update_lobby)
+        .service(upload_custom_questions);
 }
 
 
@@ -183,9 +185,47 @@ async fn update_lobby(db: web::Data<DataHandler>, session: Session, request: Htt
             if lobby.get_admin_uuid().await == uuid
             {
                 join!(lobby.set_open(params.open),
-                    lobby.update_preferences(params.initial_money, params.initial_jokers, params.normal_q_money, params.estimation_q_money),
-                    lobby.set_question_set(params.question_set.clone()));
-                //TODO handle custom question uploading and given-set loading somewhere
+                    lobby.update_preferences(params.initial_money, params.initial_jokers, params.normal_q_money, params.estimation_q_money));
+                lobby.set_question_set(params.question_set.clone()).await?;
+                return Ok(HttpResponse::NoContent().finish());
+            }
+            else
+            {
+                return Err(error::ErrorUnauthorized("You are not the lobby admin!"));
+            }
+        }
+        else
+        {
+            return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
+        }
+    }
+    else
+    {
+        return Err(error::ErrorUnauthorized("Invalid session: No player UUID!"));
+    }
+}
+
+// Upload custom questions to a lobby
+#[derive(Serialize, Deserialize)]
+struct UploadCustomQuestionsData
+{
+    lobby_id: String,
+    questions: Vec<game::Question>,
+}
+#[post("/upload_custom_questions")]
+async fn upload_custom_questions(db: web::Data<DataHandler>, session: Session, request: HttpRequest, params: web::Json<UploadCustomQuestionsData>) -> HttpResult<HttpResponse>
+{
+    ensure_cookie_consent(&request)?;
+    
+    if let Some(uuid) = session.get::<String>("uuid")?
+    {
+        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        if db_lobby.is_some()
+        {
+            let lobby = db_lobby.unwrap();
+            if lobby.get_admin_uuid().await == uuid
+            {
+                lobby.set_questions(params.questions.clone()).await?;
                 return Ok(HttpResponse::NoContent().finish());
             }
             else

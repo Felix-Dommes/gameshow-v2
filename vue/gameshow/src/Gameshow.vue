@@ -40,7 +40,7 @@
           </template>
           
           <template v-else-if="selectedWindow == 'lobby-menu'">
-            <lobby-menu :lang="lang" :admin="my_uuid == admin" :question_sets="question_sets" />
+            <lobby-menu :lang="lang" :admin="my_uuid == admin" :lobby_id="lobby" :question_sets="question_sets" @start-game="start_game" />
           </template>
           
           <!-- TODO
@@ -184,6 +184,16 @@ export default
       window.history.pushState("lobby", "Gameshow Lobby", "#" + lobby_id);
       this.selectedWindow = "lobby-menu";
       return true;
+    },
+    start_game: async function(admin_plays)
+    {
+      this.admin_plays = admin_plays;
+      if (!admin_plays && this.admin == this.my_uuid)
+      {
+        await api.leave_lobby(this.lobby);
+      }
+      
+      //TODO start game
     },
   },
   mounted: async function()

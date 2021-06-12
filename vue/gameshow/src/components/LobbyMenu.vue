@@ -1,30 +1,13 @@
 <template>
   <div class="compWindow">
-    <!-- TODO
-        field -> copy invite link
-        lobby open checkbox -> change action
-        admin plays or not checkbox => leave on start game
-        allow joining while playing checkbox => send action on start game
-        initial money -> change action
-        initial jokers -> change action
-        normal q money -> change action
-        estimation q money -> change action
-        question-selection -=> when and how?
-        start button => action
-        
-        only editable if admin
-        all directly sending checkboxes 2 sec disabled after click
-        the normal inputs should only be synced to server when starting the lobby
-    -->
-    
     <div style="margin-bottom: 1ex;">
       <label for="invite-link">{{ lang['Invite link'] }}: </label>
-      <input type="text" class="input" name="invite-link" :value="invite_link" readonly>
+      <input type="text" class="input" name="invite-link" id="invite-link" :value="invite_link" readonly autofocus>
       <input type="button" class="button" :value="lang['Copy']" @click="copy_invite_link">
     </div>
     
     <div style="margin-bottom: 1ex;">
-      <input type="checkbox" class="checkbox" name="lobby-open" v-model="lobby_open" :disabled="!admin">
+      <input type="checkbox" class="checkbox" name="lobby-open" v-model="lobby_open" :disabled="!admin" @change="update_lobby">
       <label for="lobby-open"> {{ lang['Lobby open for new players'] }}</label>
       <br>
       <input type="checkbox" class="checkbox" name="admin-plays" v-model="admin_plays" :disabled="!admin">
@@ -37,45 +20,56 @@
     <table style="margin-bottom: 1ex;">
       <tr>
         <td><label for="initial-money">{{ lang['Initial money'] }}: </label></td>
-        <td><input type="text" name="initial-money" v-model.number="initial_money" :disabled="!admin"></td>
+        <td><input type="text" name="initial-money" v-model.number="initial_money" :disabled="!admin" @change="update_lobby"></td>
       </tr>
       <tr>
         <td><label for="initial-jokers">{{ lang['Jokers'] }}: </label></td>
-        <td><input type="text" name="initial-jokers" v-model.number="initial_jokers" :disabled="!admin"></td>
+        <td><input type="text" name="initial-jokers" v-model.number="initial_jokers" :disabled="!admin" @change="update_lobby"></td>
       </tr>
       <tr>
         <td><label for="normal-q-money">{{ lang['Normal question reward'] }}: </label></td>
-        <td><input type="text" name="normal-q-money" v-model.number="normal_q_money" :disabled="!admin"></td>
+        <td><input type="text" name="normal-q-money" v-model.number="normal_q_money" :disabled="!admin" @change="update_lobby"></td>
       </tr>
       <tr>
         <td><label for="estimation-q-money">{{ lang['Estimation question reward'] }}: </label></td>
-        <td><input type="text" name="estimation-q-money" v-model.number="estimation_q_money" :disabled="!admin"></td>
+        <td><input type="text" name="estimation-q-money" v-model.number="estimation_q_money" :disabled="!admin" @change="update_lobby"></td>
       </tr>
     </table>
     
     <div style="margin-bottom: 1em;">
       <label for="question-set">{{ lang['Question set'] }}: </label>
-      <select name="question-set" v-model="question_set">
+      <select name="question-set" v-model="question_set" :disabled="!admin" @change="update_lobby">
         <option value="" disabled>{{ lang['Select one'] }}</option>
         <option v-for="set in question_sets" :key="set" :value="set">{{ set }}</option>
         <option value="custom">{{ lang['Custom'] }}</option>
       </select>
-      <template v-if="question_set == 'custom'">
+      <template v-if="question_set == 'custom' && admin">
         <br>
         <a href="questions-example.json">{{ lang['Download example'] }}</a>
         <br>
-        <!-- TODO upload question file -->
+        <label for="question-file-selector">{{ lang['Select file'] }}: </label>
+        <input type="file" name="question-file-selector" id="question-file-selector" accept="application/json,.json" @change="load_questions">
+        <template v-if="error">
+          <br>
+          <span class="error">{{ error_msg }}</span>
+        </template>
+        <template v-else-if="success">
+          <br>
+          <span class="success">{{ success_msg }}</span>
+        </template>
       </template>
     </div>
     
-    <input type="button" id="start" :value="lang['Start game']" :disabled="!admin">
+    <input type="button" id="start" :value="lang['Start game']" :disabled="!admin" @click="start_game">
   </div>
 </template>
 
 <script>
+import api from '../assets/api.js'
+
 export default {
   name: "LobbyMenu",
-  props: ["lang", "admin", "question_sets"],
+  props: ["lang", "admin", "lobby_id", "question_sets"],
   data: function () {
     return {
       invite_link: window.location.href,
@@ -87,16 +81,74 @@ export default {
       normal_q_money: "500",
       estimation_q_money: "1000",
       question_set: "",
+      error: false,
+      error_msg: "",
+      success: false,
+      success_msg: "",
     };
   },
   methods: {
     copy_invite_link: async function()
     {
       await navigator.clipboard.writeText(this.invite_link);
-    }
+    },
+    update_lobby: async function()
+    {
+      await api.update_lobby(this.lobby_id, this.lobby_open, this.initial_money, this.initial_jokers, this.normal_q_money, this.estimation_q_money, this.question_set);
+    },
+    load_questions: async function(event)
+    {
+      const file_list = event.target.files;
+      const file = file_list[0];
+      if (file.size > 51200)
+      {
+        this.success = false;
+        this.error_msg = this.lang["File is too large!"];
+        this.error = true;
+      }
+      else
+      {
+        //read file and upload as soon as loaded
+        const file_reader = new FileReader();
+        file_reader.addEventListener("load", async (event) => {
+          try
+          {
+            const questions = JSON.parse(event.target.result);
+            if (await api.upload_custom_questions(this.lobby_id, questions))
+            {
+              this.error = false;
+              this.success_msg = this.lang["Questions uploaded!"];
+              this.success = true;
+            }
+            else
+            {
+              this.success = false;
+              this.error_msg = this.lang["Upload error!"];
+              this.error = true;
+            }
+          }
+          catch (e)
+          {
+            this.success = false;
+            this.error_msg = this.lang["Invalid JSON!"];
+            this.error = true;
+          }
+        });
+        file_reader.readAsText(file);
+      }
+    },
+    start_game: async function()
+    {
+      if (this.lobby_open != this.open_while_playing)
+      {
+        this.lobby_open = this.open_while_playing;
+        await this.update_lobby();
+      }
+      this.$emit("start-game", this.admin_plays);
+    },
   },
   mounted: function () {
-    //document.getElementById("lobby-input").focus(); TODO
+    document.getElementById("invite-link").focus();
   },
 };
 </script>
@@ -150,6 +202,20 @@ select
 
 a
 {
+  font-size: 60%;
+}
+
+input[type=file]
+{
+  height: 3em;
+  box-sizing: border-box;
+  position: relative;
+  top: -0.5ex;
+}
+
+.success
+{
+  color: green;
   font-size: 60%;
 }
 

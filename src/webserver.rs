@@ -9,12 +9,20 @@ mod events;
 use crate::datahandler::DataHandler;
 
 
+const MAX_JSON_PAYLOAD:usize = 51200; //50 kiB
+
+
 pub async fn startup(db: DataHandler) -> std::io::Result<()>
 {
     let app_db = web::Data::new(db);
+    let json_config = web::JsonConfig::default()
+        .limit(MAX_JSON_PAYLOAD);
 
     HttpServer::new(move || {
         App::new()
+            //config
+            .app_data(json_config.clone())
+            
             //shared data
             .app_data(app_db.clone())
             

@@ -29,7 +29,7 @@ pub struct Question
 
 
 //read questions from a JSON file and return them
-fn read_questions(filename: impl AsRef<Path>) -> std::io::Result<Vec<Question>>
+pub fn read_questions(filename: impl AsRef<Path>) -> std::io::Result<Vec<Question>>
 {
     let json_string = fs::read_to_string(filename)?;
     let questions: Vec<Question> = serde_json::from_str(&json_string)?;

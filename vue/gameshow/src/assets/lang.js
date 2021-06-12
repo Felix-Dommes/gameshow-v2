@@ -1,6 +1,7 @@
 export default {
     name: "lang",
     en: {
+        "": "TODO: add text",
         "Accept": "Accept",
         "This site uses (only functional) cookies!": "This site uses (only functional) cookies!",
         "Question": "Question",
@@ -30,8 +31,14 @@ export default {
         "Select one": "Select one",
         "Custom": "Custom",
         "Download example": "Download example file",
+        "Select file": "Select file",
+        "File is too large!": "File is too large!",
+        "Questions uploaded!": "Questions uploaded!",
+        "Invalid JSON!": "Invalid JSON!",
+        "Upload error!": "Upload error!",
     },
     de: {
+        "": "TODO: Text hinzufügen",
         "Accept": "Akzeptieren",
         "This site uses (only functional) cookies!": "Diese Seite benutzt (nur funktionale) Cookies!",
         "Question": "Frage",
@@ -61,5 +68,10 @@ export default {
         "Select one": "Wähle aus",
         "Custom": "Eigene",
         "Download example": "Downloade Beispieldatei",
+        "Select file": "Datei auswählen",
+        "File is too large!": "Datei ist zu groß!",
+        "Questions uploaded!": "Fragen hochgeladen!",
+        "Invalid JSON!": "Fehlerhafte JSON!",
+        "Upload error!": "Uploadfehler!",
     },
 }

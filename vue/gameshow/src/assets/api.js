@@ -115,11 +115,11 @@ export default {
     {
         const params = {
             lobby_id: lobby_id,
-            open: open,
-            initial_money: initial_money,
-            initial_jokers: initial_jokers,
-            normal_q_money: normal_q_money,
-            estimation_q_money: estimation_q_money,
+            open: Boolean(open),
+            initial_money: Number(initial_money),
+            initial_jokers: Number(initial_jokers),
+            normal_q_money: Number(normal_q_money),
+            estimation_q_money: Number(estimation_q_money),
             question_set: question_set
         };
         const request = {
@@ -128,6 +128,28 @@ export default {
             body: JSON.stringify(params)
         };
         let response = await fetch(apiPath + "update_lobby", request);
+        if (!response.ok) {
+            let body = await response.text();
+            alert(`${this.lang["Connection to server failed!"]} \n ${response.status} ${response.statusText} \n ${body}`);
+            return false;
+        }
+        else {
+            return true;
+        }
+    },
+    //upload custom questions to lobby
+    upload_custom_questions: async function(lobby_id, questions)
+    {
+        const params = {
+            lobby_id: lobby_id,
+            questions: questions
+        };
+        const request = {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(params)
+        };
+        let response = await fetch(apiPath + "upload_custom_questions", request);
         if (!response.ok) {
             let body = await response.text();
             alert(`${this.lang["Connection to server failed!"]} \n ${response.status} ${response.statusText} \n ${body}`);
