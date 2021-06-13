@@ -1,5 +1,6 @@
-use tokio::sync::{mpsc, oneshot};
+use std::path::PathBuf;
 use std::sync::Arc;
+use tokio::sync::{mpsc, oneshot};
 
 mod database;
 mod dataworker;
@@ -63,6 +64,22 @@ impl DataHandler
     {
         let (result_sender, result_receiver) = oneshot::channel();
         self.sender.send(DataAccess::GetLobby(result_sender, uuid)).await.map_err(|_err| "db send data access error (dropped channel)")?;
+        result_receiver.await.map_err(|_err| "db receive data access result error (dropped channel)")
+    }
+    
+    /// Set the available question sets (server side files)
+    pub async fn set_question_sets(&self, question_sets: Vec<(String, PathBuf)>) -> Result<(), &'static str>
+    {
+        let (result_sender, result_receiver) = oneshot::channel();
+        self.sender.send(DataAccess::SetQuestionSets(result_sender, question_sets)).await.map_err(|_err| "db send data access error (dropped channel)")?;
+        result_receiver.await.map_err(|_err| "db receive data access result error (dropped channel)")
+    }
+    
+    /// Get the available question sets (server side files)
+    pub async fn get_question_sets(&self) -> Result<Vec<(String, PathBuf)>, &'static str>
+    {
+        let (result_sender, result_receiver) = oneshot::channel();
+        self.sender.send(DataAccess::GetQuestionSets(result_sender)).await.map_err(|_err| "db send data access error (dropped channel)")?;
         result_receiver.await.map_err(|_err| "db receive data access result error (dropped channel)")
     }
 }

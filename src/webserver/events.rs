@@ -1,18 +1,17 @@
 use std::pin::Pin;
 use std::task::{Context, Poll};
-use std::time::Duration;
+use std::time::Instant;
 use futures::Stream;
 use actix_web::{web, error, get, HttpRequest, HttpResponse, Responder};
 use actix_web::Result as HttpResult;
 use actix_session::Session;
 use tokio::sync::broadcast;
-use tokio::time;
 
 use crate::datahandler::DataHandler;
 use crate::game::Event;
 use super::ensure_cookie_consent;
 
-const PING_INTERVAL:u64 = 10; //interval to ping clients in seconds
+const PING_INTERVAL:u64 = 5; //interval to ping clients in seconds
 
 
 pub fn config(cfg: &mut web::ServiceConfig)
@@ -46,6 +45,62 @@ async fn event_stream(db: web::Data<DataHandler>, session: Session, request: Htt
 struct EventStreamClient
 {
     receiver: broadcast::Receiver<Event>,
+    last_ping: Instant,
+}
+
+impl EventStreamClient
+{
+    pub fn new(event_source: broadcast::Receiver<Event>) -> Self
+    {
+        EventStreamClient {
+            receiver: event_source,
+            last_ping: Instant::now(),
+        }
+    }
+    
+    fn ping() -> web::Bytes
+    {
+        web::Bytes::from("event: ping\ndata: \"ping\"\n\n")
+    }
+    
+    fn event_to_bytes(event: Event) -> web::Bytes
+    {
+        let data = serde_json::to_string(&event).unwrap();
+        web::Bytes::from(format!("event: game_event\ndata: {}\n\n", data))
+    }
+}
+
+impl Stream for EventStreamClient
+{
+    type Item = Result<web::Bytes, error::Error>;
+    
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>>
+    {
+        if self.last_ping.elapsed().as_secs() >= PING_INTERVAL
+        {
+            self.last_ping = Instant::now();
+            return Poll::Ready(Some(Ok(EventStreamClient::ping())));
+        }
+        else
+        {
+            match self.receiver.try_recv()
+            {
+                Ok(content) => Poll::Ready(Some(Ok(EventStreamClient::event_to_bytes(content)))),
+                Err(broadcast::error::TryRecvError::Closed) => Poll::Ready(None),
+                Err(broadcast::error::TryRecvError::Lagged(_)) => Poll::Ready(None), //close connection when messages were lost
+                Err(broadcast::error::TryRecvError::Empty) => Poll::Pending,
+            }
+        }
+    }
+}
+
+/*
+use std::time::Duration;
+use tokio::time;
+
+struct EventStreamClient
+{
+    receiver: broadcast::Receiver<Event>,
     pinger: time::Interval,
 }
 
@@ -67,7 +122,7 @@ impl EventStreamClient
     fn event_to_bytes(event: Event) -> web::Bytes
     {
         let data = serde_json::to_string(&event).unwrap();
-        web::Bytes::from(format!("event: {}\nid: {}\ndata: {}\n\n", event.event_name, event.id, data))
+        web::Bytes::from(format!("event: game_event\ndata: {}\n\n", data))
     }
 }
 
@@ -93,3 +148,4 @@ impl Stream for EventStreamClient
         }
     }
 }
+*/

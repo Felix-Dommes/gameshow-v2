@@ -6,61 +6,100 @@
       <input type="button" class="button" :value="lang['Copy']" @click="copy_invite_link">
     </div>
     
-    <div style="margin-bottom: 1ex;">
-      <input type="checkbox" class="checkbox" name="lobby-open" v-model="lobby_open" :disabled="!admin" @change="update_lobby">
-      <label for="lobby-open"> {{ lang['Lobby open for new players'] }}</label>
-      <br>
-      <input type="checkbox" class="checkbox" name="admin-plays" v-model="admin_plays" :disabled="!admin">
-      <label for="admin-plays"> {{ lang['Admin also plays'] }}</label>
-      <br>
-      <input type="checkbox" class="checkbox" name="open-while-playing" v-model="open_while_playing" :disabled="!admin">
-      <label for="open-while-playing"> {{ lang['Lobby open while playing'] }}</label>
-    </div>
-    
-    <table style="margin-bottom: 1ex;">
-      <tr>
-        <td><label for="initial-money">{{ lang['Initial money'] }}: </label></td>
-        <td><input type="text" name="initial-money" v-model.number="initial_money" :disabled="!admin" @change="update_lobby"></td>
-      </tr>
-      <tr>
-        <td><label for="initial-jokers">{{ lang['Jokers'] }}: </label></td>
-        <td><input type="text" name="initial-jokers" v-model.number="initial_jokers" :disabled="!admin" @change="update_lobby"></td>
-      </tr>
-      <tr>
-        <td><label for="normal-q-money">{{ lang['Normal question reward'] }}: </label></td>
-        <td><input type="text" name="normal-q-money" v-model.number="normal_q_money" :disabled="!admin" @change="update_lobby"></td>
-      </tr>
-      <tr>
-        <td><label for="estimation-q-money">{{ lang['Estimation question reward'] }}: </label></td>
-        <td><input type="text" name="estimation-q-money" v-model.number="estimation_q_money" :disabled="!admin" @change="update_lobby"></td>
-      </tr>
-    </table>
-    
-    <div style="margin-bottom: 1em;">
-      <label for="question-set">{{ lang['Question set'] }}: </label>
-      <select name="question-set" v-model="question_set" :disabled="!admin" @change="update_lobby">
-        <option value="" disabled>{{ lang['Select one'] }}</option>
-        <option v-for="set in question_sets" :key="set" :value="set">{{ set }}</option>
-        <option value="custom">{{ lang['Custom'] }}</option>
-      </select>
-      <template v-if="question_set == 'custom' && admin">
+    <template v-if="admin">
+      <div style="margin-bottom: 1ex;">
+        <input type="checkbox" class="checkbox" name="lobby-open" v-model="lobby_open" @change="update_lobby">
+        <label for="lobby-open"> {{ lang['Lobby open for new players'] }}</label>
         <br>
-        <a href="questions-example.json">{{ lang['Download example'] }}</a>
+        <input type="checkbox" class="checkbox" name="admin-plays" v-model="admin_plays">
+        <label for="admin-plays"> {{ lang['Admin also plays'] }}</label>
         <br>
-        <label for="question-file-selector">{{ lang['Select file'] }}: </label>
-        <input type="file" name="question-file-selector" id="question-file-selector" accept="application/json,.json" @change="load_questions">
-        <template v-if="error">
+        <input type="checkbox" class="checkbox" name="open-while-playing" v-model="open_while_playing">
+        <label for="open-while-playing"> {{ lang['Lobby open while playing'] }}</label>
+      </div>
+      
+      <table style="margin-bottom: 1ex;">
+        <tr>
+          <td><label for="initial-money">{{ lang['Initial money'] }}: </label></td>
+          <td><input type="text" name="initial-money" v-model.number="initial_money" @change="update_lobby"></td>
+        </tr>
+        <tr>
+          <td><label for="initial-jokers">{{ lang['Jokers'] }}: </label></td>
+          <td><input type="text" name="initial-jokers" v-model.number="initial_jokers" @change="update_lobby"></td>
+        </tr>
+        <tr>
+          <td><label for="normal-q-money">{{ lang['Normal question reward'] }}: </label></td>
+          <td><input type="text" name="normal-q-money" v-model.number="normal_q_money" @change="update_lobby"></td>
+        </tr>
+        <tr>
+          <td><label for="estimation-q-money">{{ lang['Estimation question reward'] }}: </label></td>
+          <td><input type="text" name="estimation-q-money" v-model.number="estimation_q_money" @change="update_lobby"></td>
+        </tr>
+      </table>
+      
+      <div style="margin-bottom: 1em;">
+        <label for="question-set">{{ lang['Question set'] }}: </label>
+        <select name="question-set" v-model="question_set" @change="update_lobby">
+          <option value="" disabled>{{ lang['Select one'] }}</option>
+          <option v-for="set in question_sets" :key="set" :value="set">{{ set }}</option>
+          <option value="custom">{{ lang['Custom'] }}</option>
+        </select>
+        <template v-if="question_set == 'custom'">
           <br>
-          <span class="error">{{ error_msg }}</span>
-        </template>
-        <template v-else-if="success">
+          <a href="questions-example.json">{{ lang['Download example'] }}</a>
           <br>
-          <span class="success">{{ success_msg }}</span>
+          <label for="question-file-selector">{{ lang['Select file'] }}: </label>
+          <input type="file" name="question-file-selector" id="question-file-selector" accept="application/json,.json" @change="load_questions">
+          <template v-if="error">
+            <br>
+            <span class="error">{{ error_msg }}</span>
+          </template>
+          <template v-else-if="success">
+            <br>
+            <span class="success">{{ success_msg }}</span>
+          </template>
         </template>
-      </template>
-    </div>
+      </div>
+      
+      <input type="button" id="start" :value="lang['Start game']" :disabled="this.question_set == ''" @click="start_game">
+    </template>
     
-    <input type="button" id="start" :value="lang['Start game']" :disabled="!admin" @click="start_game">
+    <template v-else>
+      <div style="margin-bottom: 1ex;">
+        <input type="checkbox" class="checkbox" name="lobby-open" v-model="sync_params.lobby_open" disabled>
+        <label for="lobby-open"> {{ lang['Lobby open for new players'] }}</label>
+      </div>
+      
+      <table style="margin-bottom: 1ex;">
+        <tr>
+          <td><label for="initial-money">{{ lang['Initial money'] }}: </label></td>
+          <td><input type="text" name="initial-money" v-model.number="sync_params.initial_money" disabled></td>
+        </tr>
+        <tr>
+          <td><label for="initial-jokers">{{ lang['Jokers'] }}: </label></td>
+          <td><input type="text" name="initial-jokers" v-model.number="sync_params.initial_jokers" disabled></td>
+        </tr>
+        <tr>
+          <td><label for="normal-q-money">{{ lang['Normal question reward'] }}: </label></td>
+          <td><input type="text" name="normal-q-money" v-model.number="sync_params.normal_q_money" disabled></td>
+        </tr>
+        <tr>
+          <td><label for="estimation-q-money">{{ lang['Estimation question reward'] }}: </label></td>
+          <td><input type="text" name="estimation-q-money" v-model.number="sync_params.estimation_q_money" disabled></td>
+        </tr>
+      </table>
+      
+      <div style="margin-bottom: 1em;">
+        <label for="question-set">{{ lang['Question set'] }}: </label>
+        <select name="question-set" v-model="sync_params.question_set" disabled>
+          <option value="" disabled>{{ lang['Select one'] }}</option>
+          <option v-for="set in question_sets" :key="set" :value="set">{{ set }}</option>
+          <option value="custom">{{ lang['Custom'] }}</option>
+        </select>
+      </div>
+      
+      <input type="button" id="start" :value="lang['Start game']" disabled>
+    </template>
   </div>
 </template>
 
@@ -69,7 +108,7 @@ import api from '../assets/api.js'
 
 export default {
   name: "LobbyMenu",
-  props: ["lang", "admin", "lobby_id", "question_sets"],
+  props: ["lang", "admin", "lobby_id", "question_sets", "sync_params"],
   data: function () {
     return {
       invite_link: window.location.href,
@@ -139,6 +178,22 @@ export default {
     },
     start_game: async function()
     {
+      if (this.question_set == "" || (this.question_set == "custom" && !this.success))
+      {
+        alert(this.lang["Load questions before you start the game!"]);
+        return;
+      }
+      if (Boolean(this.sync_params.lobby_open) != Boolean(this.lobby_open) || 
+        Number(this.sync_params.initial_money) != Number(this.initial_money) ||
+        Number(this.sync_params.initial_jokers) != Number(this.initial_jokers) ||
+        Number(this.sync_params.normal_q_money) != Number(this.normal_q_money) ||
+        Number(this.sync_params.estimation_q_money) != Number(this.estimation_q_money) ||
+        this.sync_params.question_set != this.question_set )
+      {
+        alert(this.lang["Game settings out of sync, please wait!"]);
+        return;
+      }
+      
       if (this.lobby_open != this.open_while_playing)
       {
         this.lobby_open = this.open_while_playing;

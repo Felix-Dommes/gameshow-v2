@@ -1,6 +1,7 @@
-use uuid::Uuid;
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::Arc;
+use uuid::Uuid;
 
 use crate::game::Gameshow;
 
@@ -9,13 +10,14 @@ pub struct DataBase
 {
     players: HashMap<String, String>,
     lobbies: HashMap<String, Arc<Gameshow>>,
+    question_sets: Vec<(String, PathBuf)>,
 }
 
 impl DataBase
 {
     pub fn new() -> Self
     {
-        DataBase { players: HashMap::new(), lobbies: HashMap::new() }
+        DataBase { players: HashMap::new(), lobbies: HashMap::new(), question_sets: Vec::new() }
     }
     
     pub fn create_player(&mut self, name: String) -> String
@@ -77,5 +79,15 @@ impl DataBase
         {
             Some(self.lobbies[&uuid].clone())
         }
+    }
+    
+    pub fn set_question_sets(&mut self, question_sets: Vec<(String, PathBuf)>)
+    {
+        self.question_sets = question_sets;
+    }
+    
+    pub fn get_question_sets(&self) -> Vec<(String, PathBuf)>
+    {
+        self.question_sets.clone()
     }
 }

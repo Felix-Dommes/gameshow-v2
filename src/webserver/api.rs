@@ -78,9 +78,9 @@ async fn get_name(db: web::Data<DataHandler>, session: Session, request: HttpReq
 
 // Get a list of question sets
 #[get("/get_question_sets")]
-async fn get_question_sets() -> HttpResult<HttpResponse>
+async fn get_question_sets(db: web::Data<DataHandler>) -> HttpResult<HttpResponse>
 {
-    let list = game::find_question_files().map_err(|err| error::ErrorInternalServerError(err))?;
+    let list = db.get_question_sets().await.map_err(|err| error::ErrorInternalServerError(err))?;
     let question_sets:Vec<String> = list.iter().map(|x| x.0.clone()).collect();
     Ok(HttpResponse::Ok().json(question_sets))
 }

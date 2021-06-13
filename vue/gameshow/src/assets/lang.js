@@ -36,6 +36,9 @@ export default {
         "Questions uploaded!": "Questions uploaded!",
         "Invalid JSON!": "Invalid JSON!",
         "Upload error!": "Upload error!",
+        "Load questions before you start the game!": "Load questions before you start the game!",
+        "Something went wrong! Reloading page..": "Something went wrong! Reloading page..",
+        "Game settings out of sync, please wait!": "Game settings out of sync, please wait!",
     },
     de: {
         "": "TODO: Text hinzufügen",
@@ -73,5 +76,8 @@ export default {
         "Questions uploaded!": "Fragen hochgeladen!",
         "Invalid JSON!": "Fehlerhafte JSON!",
         "Upload error!": "Uploadfehler!",
+        "Load questions before you start the game!": "Lade die Fragen vor dem Spielstart!",
+        "Something went wrong! Reloading page..": "Etwas ist schief gelaufen! Seite wird neu geladen..",
+        "Game settings out of sync, please wait!": "Spieleinstellungen nicht synchron zum Server, bitte warten!",
     },
 }
