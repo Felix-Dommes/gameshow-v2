@@ -12,8 +12,12 @@
         <span class="error">{{ error_msg }}</span>
         <br>
       </template>
-      <template v-if="notFound">
+      <template v-if="join_errors.not_found">
         <span class="error">{{ lang["Lobby ID was not found!"] }}</span>
+        <br>
+      </template>
+      <template v-else-if="join_errors.closed">
+        <span class="error">{{ lang["Lobby is closed!"] }}</span>
         <br>
       </template>
       <input type="submit" :value="lang['Join']" id="lobby-join" class="button">
@@ -24,7 +28,7 @@
 <script>
 export default {
   name: "LobbySelection",
-  props: ["lang", "not-found"],
+  props: ["lang", "join_errors"],
   data: function () {
     return {
       lobby_id: "",

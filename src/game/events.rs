@@ -2,7 +2,7 @@ use std::fmt;
 use serde::{Serialize, Deserialize};
 use tokio::sync::broadcast;
 
-use super::PlayerData;
+use super::PublicPlayerData;
 use super::questions::*;
 
 
@@ -109,13 +109,13 @@ pub struct EventBeginVersusQAnswering
 pub struct EventShowResults
 {
     pub correct_answer: usize,
-    pub previous_player_data: Vec<PlayerData>,
-    pub player_data: Vec<PlayerData>,
+    pub previous_player_data: Vec<PublicPlayerData>,
+    pub player_data: Vec<PublicPlayerData>,
 }
 #[derive(Serialize, Deserialize, Clone)]
 pub struct EventGameEnding
 {
-    pub player_data: Vec<PlayerData>,
+    pub player_data: Vec<PublicPlayerData>,
 }
 #[derive(Serialize, Deserialize, Clone)]
 pub struct EventBackToMenu
@@ -125,7 +125,7 @@ pub struct EventBackToMenu
 #[derive(Serialize, Deserialize, Clone)]
 pub struct EventPlayerListUpdate
 {
-    pub player_data: Vec<PlayerData>,
+    pub player_data: Vec<PublicPlayerData>,
 }
 #[derive(Serialize, Deserialize, Clone)]
 pub struct EventLobbySettingsUpdate

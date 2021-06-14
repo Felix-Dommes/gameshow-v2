@@ -35,11 +35,11 @@
           </template>
           
           <template v-else-if="selectedWindow == 'lobby-selection'">
-            <lobby-selection :lang="lang" :not-found="param_not_found" @create-lobby="create_lobby" @join-lobby="join_lobby" />
+            <lobby-selection :lang="lang" :join_errors="lobby_selection_params" @create-lobby="create_lobby" @join-lobby="join_lobby" />
           </template>
           
           <template v-else-if="selectedWindow == 'lobby-menu'">
-            <lobby-menu :lang="lang" :admin="my_uuid == admin" :lobby_id="lobby" :question_sets="question_sets" :sync_params="lobby_menu_params" @start-game="start_game" />
+            <lobby-menu :lang="lang" :admin="nickname == admin" :lobby_id="lobby" :question_sets="question_sets" :sync_params="lobby_menu_params" @start-game="start_game" />
           </template>
           
           <!-- TODO
@@ -84,7 +84,6 @@ export default
     
     consent: false,
     selectedWindow: "loading",
-    my_uuid: "",
     nickname: "",
     lobby: "",
     admin: "",
@@ -101,7 +100,10 @@ export default
     last_event_id: -1,
     event_queue: [],
     
-    param_not_found: false,
+    lobby_selection_params: {
+      not_found: false,
+      closed: false,
+    },
     lobby_menu_params: {
       lobby_open: true,
       initial_money: "500",
@@ -132,11 +134,10 @@ export default
     {
       this.consent = true;
       //check if already logged in
-      let [name, uuid] = await api.get_name();
-      if (name != "" && uuid != "") {
-        this.my_uuid = uuid;
+      const name = await api.get_name();
+      if (name != "") {
         this.nickname = name;
-        let lobby_id = global.extract_lobby_id();
+        const lobby_id = global.extract_lobby_id();
         if (lobby_id != "")
         {
           if (!await this.join_lobby(lobby_id)) this.selectedWindow = "lobby-selection";
@@ -153,11 +154,10 @@ export default
     set_name: async function(name)
     {
       if (!this.consent) return;
-      const uuid = await api.set_name(name);
-      if (uuid != "") {
-        this.my_uuid = uuid;
-        this.nickname = name;
-        let lobby_id = global.extract_lobby_id();
+      const nickname = await api.set_name(name);
+      if (nickname != "") {
+        this.nickname = nickname;
+        const lobby_id = global.extract_lobby_id();
         if (lobby_id != "")
         {
           if (!await this.join_lobby(lobby_id)) this.selectedWindow = "lobby-selection";
@@ -173,11 +173,13 @@ export default
       if (!this.consent) return;
       let result = await api.create_lobby();
       if (!result.valid) return;
-      let lobby_id = result.lobby_id;
-      result = await api.join_lobby(lobby_id);
-      this.param_not_found = result.not_found;
-      if (!result.valid) return;
+      const lobby_id = result.lobby_id;
       this.lobby = lobby_id;
+      this.admin = result.admin;
+      result = await api.join_lobby(lobby_id);
+      this.lobby_selection_params.not_found = result.not_found;
+      this.lobby_selection_params.closed = result.closed;
+      if (!result.valid) return;
       this.admin = result.admin;
       this.nickname = result.new_name;
       await this.setup_event_listener();
@@ -188,8 +190,9 @@ export default
     {
       if (!this.consent) return false;
       if (lobby_id == "") return false;
-      let result = await api.join_lobby(lobby_id);
-      this.param_not_found = result.not_found;
+      const result = await api.join_lobby(lobby_id);
+      this.lobby_selection_params.not_found = result.not_found;
+      this.lobby_selection_params.closed = result.closed;
       if (!result.valid) return false;
       this.lobby = lobby_id;
       this.admin = result.admin;
@@ -212,7 +215,7 @@ export default
     start_game: async function(admin_plays)
     {
       this.admin_plays = admin_plays;
-      if (!admin_plays && this.admin == this.my_uuid)
+      if (!admin_plays && this.admin == this.nickname)
       {
         await api.leave_lobby(this.lobby);
       }
@@ -384,7 +387,7 @@ export default
       let found_myself = false;
       for (var player of this.players)
       {
-        if (player.uuid == this.my_uuid)
+        if (player.name == this.nickname)
         {
           this.money = player.money;
           this.jokers = player.jokers;

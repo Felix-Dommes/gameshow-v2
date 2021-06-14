@@ -34,21 +34,21 @@ async fn set_name(db: web::Data<DataHandler>, session: Session, request: HttpReq
     //check if user exists before and possible change name only
     if let Some(uuid) = session.get::<String>("uuid")?
     {
-        let was_there = db.set_player_name(uuid.clone(), params.name.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        let was_there = db.set_player_name(uuid, params.name.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
         if was_there
         {
-            Ok(HttpResponse::Ok().json(uuid))
+            Ok(HttpResponse::Ok().json(params.name.clone()))
         }
         else
         {
-            Ok(HttpResponse::Created().json(uuid))
+            Ok(HttpResponse::Created().json(params.name.clone()))
         }
     }
     else
     {
         let uuid = db.create_player(params.name.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
-        session.set("uuid", uuid.clone())?;
-        Ok(HttpResponse::Created().json(uuid))
+        session.set("uuid", uuid)?;
+        Ok(HttpResponse::Created().json(params.name.clone()))
     }
 }
 
@@ -60,10 +60,10 @@ async fn get_name(db: web::Data<DataHandler>, session: Session, request: HttpReq
     
     if let Some(uuid) = session.get::<String>("uuid")?
     {
-        let name = db.get_player_name(uuid.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        let name = db.get_player_name(uuid).await.map_err(|err| error::ErrorInternalServerError(err))?;
         if name.is_some()
         {
-            return Ok(HttpResponse::Ok().json((name.unwrap(), uuid)));
+            return Ok(HttpResponse::Ok().json(name.unwrap()));
         }
         else
         {

@@ -24,10 +24,10 @@ export default {
     {
         let response = await fetch(apiPath + "get_name");
         if (!response.ok) {
-            if (response.status == 404) return ["", ""];
+            if (response.status == 404) return "";
             let body = await response.text();
             alert(`${this.lang["Connection to server failed!"]} \n ${response.status} ${response.statusText} \n ${body}`);
-            return ["", ""];
+            return "";
         }
         else {
             return await response.json();
@@ -56,8 +56,8 @@ export default {
             return { valid: false };
         }
         else {
-            let data = await response.json();
-            return { valid: true, lobby_id: data };
+            let [lobby_id, admin] = await response.json();
+            return { valid: true, lobby_id: lobby_id, admin: admin };
         }
     },
     //join an existing lobby
@@ -66,13 +66,14 @@ export default {
         let response = await fetch(apiPath + "join_lobby?uuid=" + encodeURIComponent(uuid));
         if (!response.ok) {
             let body = await response.text();
-            if (response.status == 404) return { valid: false, not_found: true, msg: body };
+            if (response.status == 404) return { valid: false, not_found: true, closed: false, msg: body };
+            if (response.status == 403) return { valid: false, not_found: false, closed: true, msg: body };
             alert(`${this.lang["Connection to server failed!"]} \n ${response.status} ${response.statusText} \n ${body}`);
-            return { valid: false, not_found: false };
+            return { valid: false, not_found: false, closed: false };
         }
         else {
             let data = await response.json();
-            return { valid: true, not_found: false, admin: data.admin, new_name: data.new_name };
+            return { valid: true, not_found: false, closed: false, admin: data.admin, new_name: data.new_name };
         }
     },
     //leave a lobby

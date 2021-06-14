@@ -242,7 +242,7 @@ impl Gameshow
     }
     
     
-    pub async fn join(&self, uuid: String, mut name: String) -> (bool, Option<String>)
+    pub async fn join(&self, uuid: String, mut name: String) -> Option<String>
     {
         //check if already joined and return true if so; also check if name is already in use
         let mut name_in_use = false;
@@ -252,7 +252,7 @@ impl Gameshow
             {
                 if player.uuid == uuid
                 {
-                    return (true, Some(player.name.clone()));
+                    return Some(player.name.clone());
                 }
                 else if player.name == name
                 {
@@ -276,7 +276,7 @@ impl Gameshow
                 answer: 0,
             };
             (*players_access).push(new_player);
-            return (true, Some(name));
+            return Some(name);
         }
         else if self.is_open().await
         { //others need to have unique name (from others and from admin)
@@ -308,11 +308,11 @@ impl Gameshow
             };
             (*players_access).push(new_player);
             
-            return (true, Some(name));
+            return Some(name);
         }
         else
         {
-            return (false, None);
+            return None;
         }
     }
     
@@ -338,6 +338,19 @@ impl Gameshow
 pub struct PlayerData
 {
     uuid: String,
+    name: String,
+    jokers: usize,
+    money: i64,
+    //could also use Option<>, but easier for frontend to handle without
+    money_bet: i64,
+    vs_player: String,
+    answer: usize,
+}
+
+//struct for player data to be sent to clients (without uuid)
+#[derive(Serialize, Deserialize, Clone)]
+pub struct PublicPlayerData
+{
     name: String,
     jokers: usize,
     money: i64,

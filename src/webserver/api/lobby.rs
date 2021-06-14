@@ -31,8 +31,9 @@ async fn create_lobby(db: web::Data<DataHandler>, session: Session, request: Htt
         let name = db.get_player_name(uuid.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
         if name.is_some()
         {
-            let lobby_uuid = db.create_lobby(uuid, name.unwrap()).await.map_err(|err| error::ErrorInternalServerError(err))?;
-            return Ok(HttpResponse::Ok().json(lobby_uuid));
+            let name = name.unwrap();
+            let lobby_uuid = db.create_lobby(uuid, name.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+            return Ok(HttpResponse::Ok().json( (lobby_uuid, name) ));
         }
         else
         {
@@ -71,12 +72,12 @@ async fn join_lobby(db: web::Data<DataHandler>, session: Session, request: HttpR
             if db_lobby.is_some()
             {
                 let lobby = db_lobby.unwrap();
-                let admin_uuid = lobby.get_admin_uuid().await;
+                let admin_name = lobby.get_admin_name().await;
                 //finally do the joining itself
-                let joined = lobby.join(uuid, player_name.unwrap()).await;
-                if joined.0
+                let joined_name = lobby.join(uuid, player_name.unwrap()).await;
+                if joined_name.is_some()
                 {
-                    return Ok(HttpResponse::Ok().json(JoinLobbyReturn { admin: admin_uuid, new_name: joined.1.unwrap() }));
+                    return Ok(HttpResponse::Ok().json(JoinLobbyReturn { admin: admin_name, new_name: joined_name.unwrap() }));
                 }
                 else
                 {
