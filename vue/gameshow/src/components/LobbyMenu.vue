@@ -21,19 +21,19 @@
       <table style="margin-bottom: 1ex;">
         <tr>
           <td><label for="initial-money">{{ lang['Initial money'] }}: </label></td>
-          <td><input type="text" name="initial-money" v-model.number="initial_money" @change="update_lobby"></td>
+          <td><input type="number" name="initial-money" min="1" v-model.number="initial_money" @change="update_lobby"></td>
         </tr>
         <tr>
           <td><label for="initial-jokers">{{ lang['Jokers'] }}: </label></td>
-          <td><input type="text" name="initial-jokers" v-model.number="initial_jokers" @change="update_lobby"></td>
+          <td><input type="number" name="initial-jokers" min="0" v-model.number="initial_jokers" @change="update_lobby"></td>
         </tr>
         <tr>
           <td><label for="normal-q-money">{{ lang['Normal question reward'] }}: </label></td>
-          <td><input type="text" name="normal-q-money" v-model.number="normal_q_money" @change="update_lobby"></td>
+          <td><input type="number" name="normal-q-money" min="1" v-model.number="normal_q_money" @change="update_lobby"></td>
         </tr>
         <tr>
           <td><label for="estimation-q-money">{{ lang['Estimation question reward'] }}: </label></td>
-          <td><input type="text" name="estimation-q-money" v-model.number="estimation_q_money" @change="update_lobby"></td>
+          <td><input type="number" name="estimation-q-money" min="1" v-model.number="estimation_q_money" @change="update_lobby"></td>
         </tr>
       </table>
       
@@ -61,7 +61,10 @@
         </template>
       </div>
       
-      <input type="button" id="start" :value="lang['Start game']" :disabled="this.question_set == ''" @click="start_game">
+      <button type="button" id="start" :disabled="this.question_set == '' || out_of_sync" @click="start_game">
+        <span v-if="out_of_sync" class="material-icons mirrored spinning">sync</span>
+        <span v-else>{{ lang['Start game'] }}</span>
+      </button>
     </template>
     
     <template v-else>
@@ -73,19 +76,19 @@
       <table style="margin-bottom: 1ex;">
         <tr>
           <td><label for="initial-money">{{ lang['Initial money'] }}: </label></td>
-          <td><input type="text" name="initial-money" v-model.number="sync_params.initial_money" disabled></td>
+          <td><input type="number" name="initial-money" v-model.number="sync_params.initial_money" disabled></td>
         </tr>
         <tr>
           <td><label for="initial-jokers">{{ lang['Jokers'] }}: </label></td>
-          <td><input type="text" name="initial-jokers" v-model.number="sync_params.initial_jokers" disabled></td>
+          <td><input type="number" name="initial-jokers" v-model.number="sync_params.initial_jokers" disabled></td>
         </tr>
         <tr>
           <td><label for="normal-q-money">{{ lang['Normal question reward'] }}: </label></td>
-          <td><input type="text" name="normal-q-money" v-model.number="sync_params.normal_q_money" disabled></td>
+          <td><input type="number" name="normal-q-money" v-model.number="sync_params.normal_q_money" disabled></td>
         </tr>
         <tr>
           <td><label for="estimation-q-money">{{ lang['Estimation question reward'] }}: </label></td>
-          <td><input type="text" name="estimation-q-money" v-model.number="sync_params.estimation_q_money" disabled></td>
+          <td><input type="number" name="estimation-q-money" v-model.number="sync_params.estimation_q_money" disabled></td>
         </tr>
       </table>
       
@@ -98,7 +101,9 @@
         </select>
       </div>
       
-      <input type="button" id="start" :value="lang['Start game']" disabled>
+      <button type="button" id="start" disabled>
+        <span>{{ lang['Start game'] }}</span>
+      </button>
     </template>
   </div>
 </template>
@@ -125,6 +130,16 @@ export default {
       success: false,
       success_msg: "",
     };
+  },
+  computed: {
+    out_of_sync: function() {
+      return (Boolean(this.sync_params.lobby_open) != Boolean(this.lobby_open) || 
+        Number(this.sync_params.initial_money) != Number(this.initial_money) ||
+        Number(this.sync_params.initial_jokers) != Number(this.initial_jokers) ||
+        Number(this.sync_params.normal_q_money) != Number(this.normal_q_money) ||
+        Number(this.sync_params.estimation_q_money) != Number(this.estimation_q_money) ||
+        this.sync_params.question_set != this.question_set);
+    },
   },
   methods: {
     copy_invite_link: async function()
@@ -183,12 +198,7 @@ export default {
         alert(this.lang["Load questions before you start the game!"]);
         return;
       }
-      if (Boolean(this.sync_params.lobby_open) != Boolean(this.lobby_open) || 
-        Number(this.sync_params.initial_money) != Number(this.initial_money) ||
-        Number(this.sync_params.initial_jokers) != Number(this.initial_jokers) ||
-        Number(this.sync_params.normal_q_money) != Number(this.normal_q_money) ||
-        Number(this.sync_params.estimation_q_money) != Number(this.estimation_q_money) ||
-        this.sync_params.question_set != this.question_set )
+      if (this.out_of_sync)
       {
         alert(this.lang["Game settings out of sync, please wait!"]);
         return;
@@ -216,7 +226,7 @@ label
   margin-right: 1ex;
 }
 
-input[type=text]
+input[type=text], input[type=number]
 {
   height: 3em;
   box-sizing: border-box;
@@ -231,12 +241,28 @@ input[type=button]
   top: -0.5ex;
 }
 
-input#start
+button#start
 {
   width: 100%;
   height: 4em;
-  position: static;
-  top: 0;
+}
+
+.mirrored
+{
+  transform: scaleX(-1);
+}
+
+@keyframes spin
+{
+  from { transform:rotate(0deg); }
+  to { transform:rotate(360deg); }
+}
+.spinning
+{
+  animation-name: spin;
+  animation-duration: 1s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
 }
 
 input[type=checkbox]

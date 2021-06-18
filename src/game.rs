@@ -247,8 +247,8 @@ impl Gameshow
         //check if already joined and return true if so; also check if name is already in use
         let mut name_in_use = false;
         {
-            let players_access = self.player_data.read().await;
-            for player in (*players_access).iter()
+            let player_access = self.player_data.read().await;
+            for player in (*player_access).iter()
             {
                 if player.uuid == uuid
                 {
@@ -264,7 +264,7 @@ impl Gameshow
         //if not already joined, check if allowed to join
         if self.get_admin_uuid().await == uuid
         { //admin can always join with its name
-            let mut players_access = self.player_data.write().await;
+            let mut player_access = self.player_data.write().await;
             let new_player = PlayerData {
                 uuid: uuid,
                 name: name.clone(),
@@ -275,19 +275,25 @@ impl Gameshow
                 vs_player: String::new(),
                 answer: 0,
             };
-            (*players_access).push(new_player);
+            (*player_access).push(new_player);
+            //send PlayerListUpdate to clients
+            let event = EventType::PlayerListUpdate(EventPlayerListUpdate {
+                player_data: make_public_player_data(&*player_access),
+            });
+            self.game_events.write().await.add(event);
+            //return name
             return Some(name);
         }
         else if self.is_open().await
         { //others need to have unique name (from others and from admin)
             let admin_name = self.get_admin_name().await;
-            let mut players_access = self.player_data.write().await;
+            let mut player_access = self.player_data.write().await;
             //make sure the name is unique
             while name_in_use || name == admin_name
             {
                 name += "2";
                 name_in_use = false;
-                for player in (*players_access).iter()
+                for player in (*player_access).iter()
                 {
                     if player.name == name
                     {
@@ -306,8 +312,13 @@ impl Gameshow
                 vs_player: String::new(),
                 answer: 0,
             };
-            (*players_access).push(new_player);
-            
+            (*player_access).push(new_player);
+            //send PlayerListUpdate to clients
+            let event = EventType::PlayerListUpdate(EventPlayerListUpdate {
+                player_data: make_public_player_data(&*player_access),
+            });
+            self.game_events.write().await.add(event);
+            //return name
             return Some(name);
         }
         else
@@ -320,15 +331,65 @@ impl Gameshow
     {
         let mut player_access = self.player_data.write().await;
         let contained = (*player_access).iter().any(|player| player.uuid == uuid);
-        (*player_access).retain(|player| player.uuid != uuid);
+        if contained
+        {
+            (*player_access).retain(|player| player.uuid != uuid);
+            //send PlayerListUpdate to clients
+            let event = EventType::PlayerListUpdate(EventPlayerListUpdate {
+                player_data: make_public_player_data(&*player_access),
+            });
+            self.game_events.write().await.add(event);
+        }
         contained
+        
         //in the future when drain_filter is not experimental anymore
         //let removed = (*player_access).drain_filter(|player| player.uuid != uuid);
-        //removed.count() != 0
+        //let contained = removed.count() != 0;
+    }
+    
+    pub async fn kick_player(&self, name: String) -> bool
+    {
+        let mut player_access = self.player_data.write().await;
+        let contained = (*player_access).iter().any(|player| player.name == name);
+        if contained
+        {
+            (*player_access).retain(|player| player.name != name);
+            //send PlayerListUpdate to clients
+            let event = EventType::PlayerListUpdate(EventPlayerListUpdate {
+                player_data: make_public_player_data(&*player_access),
+            });
+            self.game_events.write().await.add(event);
+        }
+        contained
+        
+        //in the future when drain_filter is not experimental anymore
+        //let removed = (*player_access).drain_filter(|player| player.name != name);
+        //let contained = removed.count() != 0;
+    }
+    
+    pub async fn set_player_attributes(&self, name: String, money: i64, jokers: usize) -> bool
+    {
+        let mut player_access = self.player_data.write().await;
+        let mut contained = false;
+        (*player_access).iter_mut().for_each(|player| {
+            if player.name == name
+            {
+                player.money = money;
+                player.jokers = jokers;
+                contained = true;
+            }
+        });
+        if contained
+        { //send PlayerListUpdate to clients
+            let event = EventType::PlayerListUpdate(EventPlayerListUpdate {
+                player_data: make_public_player_data(&*player_access),
+            });
+            self.game_events.write().await.add(event);
+        }
+        contained
     }
     
     //TODO:
-    //make PlayerListUpdate events when joined, leaved, answered, bet, etc.
     //answer, bet functions etc.
 }
 
@@ -358,6 +419,21 @@ pub struct PublicPlayerData
     money_bet: i64,
     vs_player: String,
     answer: usize,
+}
+
+fn make_public_player_data(players: &Vec<PlayerData>) -> Vec<PublicPlayerData>
+{
+    players.iter().map(|player| {
+        PublicPlayerData {
+            name: player.name.clone(),
+            jokers: player.jokers,
+            money: player.money,
+            
+            money_bet: player.money_bet,
+            vs_player: player.vs_player.clone(),
+            answer: player.answer,
+        }
+    }).collect()
 }
 
 #[derive(Serialize, Deserialize, Copy, Clone, PartialEq)]

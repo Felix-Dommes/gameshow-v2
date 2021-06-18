@@ -1,7 +1,9 @@
 export default {
     name: "lang",
     en: {
+        "Something went wrong! Reloading page..": "Something went wrong! Reloading page..",
         "": "TODO: add text",
+        
         "Accept": "Accept",
         "This site uses (only functional) cookies!": "This site uses (only functional) cookies!",
         "Question": "Question",
@@ -37,12 +39,19 @@ export default {
         "Invalid JSON!": "Invalid JSON!",
         "Upload error!": "Upload error!",
         "Load questions before you start the game!": "Load questions before you start the game!",
-        "Something went wrong! Reloading page..": "Something went wrong! Reloading page..",
         "Game settings out of sync, please wait!": "Game settings out of sync, please wait!",
         "Lobby is closed!": "Lobby is closed!",
+        "Players": "Players",
+        "None": "None",
+        "Edit player": "Edit player",
+        "Money": "Money",
+        "Save": "Save",
+        "Kick": "Kick",
     },
     de: {
+        "Something went wrong! Reloading page..": "Etwas ist schief gelaufen! Seite wird neu geladen..",
         "": "TODO: Text hinzufügen",
+        
         "Accept": "Akzeptieren",
         "This site uses (only functional) cookies!": "Diese Seite benutzt (nur funktionale) Cookies!",
         "Question": "Frage",
@@ -78,8 +87,13 @@ export default {
         "Invalid JSON!": "Fehlerhafte JSON!",
         "Upload error!": "Uploadfehler!",
         "Load questions before you start the game!": "Lade die Fragen vor dem Spielstart!",
-        "Something went wrong! Reloading page..": "Etwas ist schief gelaufen! Seite wird neu geladen..",
         "Game settings out of sync, please wait!": "Spieleinstellungen nicht synchron zum Server, bitte warten!",
         "Lobby is closed!": "Lobby ist geschlossen!",
+        "Players": "Spieler",
+        "None": "Keins",
+        "Edit player": "Spieler bearbeiten",
+        "Money": "Geld",
+        "Save": "Speichern",
+        "Kick": "Kicken",
     },
 }

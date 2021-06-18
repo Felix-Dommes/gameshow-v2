@@ -16,7 +16,9 @@ pub fn config(cfg: &mut web::ServiceConfig)
         .service(leave_lobby)
         .service(get_events)
         .service(update_lobby)
-        .service(upload_custom_questions);
+        .service(upload_custom_questions)
+        .service(kick_player)
+        .service(set_player_attributes);
 }
 
 
@@ -228,6 +230,105 @@ async fn upload_custom_questions(db: web::Data<DataHandler>, session: Session, r
             {
                 lobby.set_questions(params.questions.clone()).await?;
                 return Ok(HttpResponse::NoContent().finish());
+            }
+            else
+            {
+                return Err(error::ErrorUnauthorized("You are not the lobby admin!"));
+            }
+        }
+        else
+        {
+            return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
+        }
+    }
+    else
+    {
+        return Err(error::ErrorUnauthorized("Invalid session: No player UUID!"));
+    }
+}
+
+// Kick a player from playing in the lobby
+#[derive(Serialize, Deserialize)]
+struct KickPlayerData
+{
+    lobby_id: String,
+    name: String,
+}
+#[post("/kick_player")]
+async fn kick_player(db: web::Data<DataHandler>, session: Session, request: HttpRequest, params: web::Json<KickPlayerData>) -> HttpResult<HttpResponse>
+{
+    ensure_cookie_consent(&request)?;
+    
+    if let Some(uuid) = session.get::<String>("uuid")?
+    {
+        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        if db_lobby.is_some()
+        {
+            let lobby = db_lobby.unwrap();
+            if lobby.get_admin_uuid().await == uuid
+            {
+                let res = lobby.kick_player(params.name.clone()).await;
+                if res
+                {
+                    return Ok(HttpResponse::NoContent().finish());
+                }
+                else
+                {
+                    return Err(error::ErrorNotFound("Player name was not found"));
+                }
+            }
+            else
+            {
+                return Err(error::ErrorUnauthorized("You are not the lobby admin!"));
+            }
+        }
+        else
+        {
+            return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
+        }
+    }
+    else
+    {
+        return Err(error::ErrorUnauthorized("Invalid session: No player UUID!"));
+    }
+}
+
+// Set a players attributes
+#[derive(Serialize, Deserialize)]
+struct SetPlayerAttributesData
+{
+    lobby_id: String,
+    name: String,
+    money: i64,
+    jokers: usize,
+}
+#[post("/set_player_attributes")]
+async fn set_player_attributes(db: web::Data<DataHandler>, session: Session, request: HttpRequest, params: web::Json<SetPlayerAttributesData>) -> HttpResult<HttpResponse>
+{
+    ensure_cookie_consent(&request)?;
+    
+    if let Some(uuid) = session.get::<String>("uuid")?
+    {
+        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        if db_lobby.is_some()
+        {
+            let lobby = db_lobby.unwrap();
+            if lobby.get_admin_uuid().await == uuid
+            {
+                if params.money < 1
+                {
+                    return Err(error::ErrorBadRequest("Money must be at least 1!"));
+                }
+                
+                let res = lobby.set_player_attributes(params.name.clone(), params.money, params.jokers).await;
+                if res
+                {
+                    return Ok(HttpResponse::NoContent().finish());
+                }
+                else
+                {
+                    return Err(error::ErrorNotFound("Player name was not found"));
+                }
             }
             else
             {

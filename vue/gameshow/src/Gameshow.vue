@@ -13,11 +13,9 @@
             </div>
           </transition>
           
-          <!-- TODO
           <transition name="transition" mode="out-in" appear>
-            <player-list :lang="lang" :players="players" :self="nickname" :question-type="current_question.type"></player-list>
+            <player-list :lang="lang" :players="players" :self="nickname" :admin="admin" :lobby_id="lobby" :question_type="current_question.type" @admin-leaves="admin_left" />
           </transition>
-          -->
         </template>
       </div>
       
@@ -64,6 +62,9 @@ import api from './assets/api.js'
 
 import LanguageSelector from './components/LanguageSelector.vue'
 import CookieConsent from './components/CookieConsent.vue'
+
+import PlayerList from './components/PlayerList.vue'
+
 import LoginWindow from './components/LoginWindow.vue'
 import LobbySelection from './components/LobbySelection.vue'
 import LobbyMenu from './components/LobbyMenu.vue'
@@ -74,6 +75,7 @@ export default
   components: {
     LanguageSelector,
     CookieConsent,
+    PlayerList,
     LoginWindow,
     LobbySelection,
     LobbyMenu,
@@ -86,6 +88,7 @@ export default
     selectedWindow: "loading",
     nickname: "",
     lobby: "",
+    joined: false,
     admin: "",
     admin_plays: true, //only local, don't use on non-admin clients
     money: 1,
@@ -182,6 +185,7 @@ export default
       if (!result.valid) return;
       this.admin = result.admin;
       this.nickname = result.new_name;
+      this.joined = true;
       await this.setup_event_listener();
       window.history.pushState("lobby", "Gameshow Lobby", "#" + lobby_id);
       this.selectedWindow = "lobby-menu";
@@ -197,10 +201,16 @@ export default
       this.lobby = lobby_id;
       this.admin = result.admin;
       this.nickname = result.new_name;
+      this.joined = true;
       await this.setup_event_listener();
       window.history.pushState("lobby", "Gameshow Lobby", "#" + lobby_id);
       this.selectedWindow = "lobby-menu";
       return true;
+    },
+    admin_left: async function()
+    {
+      this.admin_plays = false;
+      this.joined = false;
     },
     setup_event_listener: async function()
     {
@@ -215,9 +225,24 @@ export default
     start_game: async function(admin_plays)
     {
       this.admin_plays = admin_plays;
-      if (!admin_plays && this.admin == this.nickname)
+      if (this.admin == this.nickname)
       {
-        await api.leave_lobby(this.lobby);
+        if (!admin_plays && this.joined)
+        {
+          await api.leave_lobby(this.lobby);
+          this.joined = false;
+        }
+        else if (admin_plays && !this.joined)
+        {
+          const result = await api.join_lobby(this.lobby);
+          if (!result.valid) admin_plays = false;
+          else
+          {
+            this.admin = result.admin;
+            this.nickname = result.new_name;
+            this.joined = true;
+          }
+        }
       }
       
       //TODO start game
@@ -394,11 +419,7 @@ export default
           found_myself = true;
         }
       }
-      if (!found_myself)
-      { //player was kicked or server restarted or so, have to reload!
-        alert(this.lang["Something went wrong! Reloading page.."]);
-        window.location.href = "/";
-      }
+      this.joined = found_myself;
     },
     eventLobbySettingsUpdate: function(event)
     {

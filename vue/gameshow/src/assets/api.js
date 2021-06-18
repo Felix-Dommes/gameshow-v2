@@ -160,4 +160,49 @@ export default {
             return true;
         }
     },
+    //kick a player
+    kick_player: async function (lobby_id, name) {
+        const params = {
+            lobby_id: lobby_id,
+            name: name,
+        };
+        const request = {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(params)
+        };
+        let response = await fetch(apiPath + "kick_player", request);
+        if (!response.ok) {
+            let body = await response.text();
+            alert(`${this.lang["Connection to server failed!"]} \n ${response.status} ${response.statusText} \n ${body}`);
+            return false;
+        }
+        else {
+            return true;
+        }
+    },
+    //change a player's attributes
+    set_player_attributes: async function(lobby_id, name, money, jokers)
+    {
+        const params = {
+            lobby_id: lobby_id,
+            name: name,
+            money: money,
+            jokers: jokers,
+        };
+        const request = {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(params)
+        };
+        let response = await fetch(apiPath + "set_player_attributes", request);
+        if (!response.ok) {
+            let body = await response.text();
+            alert(`${this.lang["Connection to server failed!"]} \n ${response.status} ${response.statusText} \n ${body}`);
+            return false;
+        }
+        else {
+            return true;
+        }
+    },
 }

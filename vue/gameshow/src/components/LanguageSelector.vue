@@ -29,6 +29,7 @@ export default {
 <style scoped>
 .window
 {
+  z-index: 100;
   position: fixed;
   top: -2px;
   right: 0px;
