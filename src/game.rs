@@ -5,11 +5,13 @@ use tokio::sync::broadcast;
 
 mod questions;
 mod events;
+mod state;
 
 pub use events::Event;
 pub use questions::{Question, QuestionType, find_question_files};
 
 use events::*;
+use state::*;
 
 //standard parameters for the game
 const INITIAL_MONEY:i64 = 500; //initial amount of money every player owns
@@ -19,7 +21,7 @@ const ESTIMATION_Q_MONEY:i64 = 1000; //money to get when winning a estimation qu
 
 
 //object for one gameshow lobby; includes all necessary data and methods to interact
-//lock order to avoid deadlocks: admin -> open -> current_lobby_state -> question_set -> questions -> player_data -> game_events
+//lock order to avoid deadlocks: admin -> open -> lobby_state -> question_set -> questions -> player_data -> game_events
 pub struct Gameshow
 {
     //data related to lobby
@@ -32,11 +34,11 @@ pub struct Gameshow
     question_set: RwLock<String>, //name of selected questions
     
     //data related to the game
-    player_data: RwLock<Vec<PlayerData>>,
+    lobby_state: RwLock<LobbyState>,
     questions: RwLock<Vec<Question>>,
-    game_events: RwLock<EventManager>,
     current_question: AtomicUsize,
-    current_lobby_state: RwLock<LobbyState>,
+    player_data: RwLock<Vec<PlayerData>>,
+    game_events: RwLock<EventManager>,
 }
 
 impl Gameshow
@@ -52,11 +54,11 @@ impl Gameshow
             param_estimation_q_money: AtomicI64::new(ESTIMATION_Q_MONEY),
             question_set: RwLock::new(String::new()),
             
-            player_data: RwLock::new(Vec::new()),
+            lobby_state: RwLock::new(LobbyState::Menu(false)),
             questions: RwLock::new(Vec::new()),
-            game_events: RwLock::new(EventManager::new()),
             current_question: AtomicUsize::new(0),
-            current_lobby_state: RwLock::new(LobbyState::Menu(false)),
+            player_data: RwLock::new(Vec::new()),
+            game_events: RwLock::new(EventManager::new()),
         }
     }
     
@@ -434,18 +436,4 @@ fn make_public_player_data(players: &Vec<PlayerData>) -> Vec<PublicPlayerData>
             answer: player.answer,
         }
     }).collect()
-}
-
-#[derive(Serialize, Deserialize, Copy, Clone, PartialEq)]
-enum LobbyState
-{ //the bool indicates if it is ready to transition to next state
-    Menu(bool),
-    Results(bool),
-    NormalQAnswering(bool),
-    BettingQBetting(bool),
-    BettingQAnswering(bool),
-    EstimationQAnswering(bool),
-    VersusQSelecting(bool),
-    VersusQAnswering(bool),
-    GameEnding,
 }
