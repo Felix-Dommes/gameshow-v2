@@ -90,9 +90,21 @@ export default {
             return true;
         }
     },
+    //get a lobby's player data
+    get_player_data: async function (lobby_id) {
+        let response = await fetch(apiPath + "get_player_data?lobby_id=" + encodeURIComponent(lobby_id));
+        if (!response.ok) {
+            let body = await response.text();
+            alert(`${this.lang["Connection to server failed!"]} \n ${response.status} ${response.statusText} \n ${body}`);
+            return [];
+        }
+        else {
+            let data = await response.json();
+            return data;
+        }
+    },
     //get a lobby's events
-    get_events: async function(lobby_id)
-    {
+    get_events: async function (lobby_id) {
         let response = await fetch(apiPath + "get_events?lobby_id=" + encodeURIComponent(lobby_id));
         if (!response.ok) {
             let body = await response.text();
@@ -203,6 +215,70 @@ export default {
         }
         else {
             return true;
+        }
+    },
+    //activate/force next lobby state
+    next_state: async function (lobby_id) {
+        let response = await fetch(apiPath + "next_state?lobby_id=" + encodeURIComponent(lobby_id));
+        if (!response.ok) {
+            let body = await response.text();
+            alert(`${this.lang["Connection to server failed!"]} \n ${response.status} ${response.statusText} \n ${body}`);
+            return false;
+        }
+        else {
+            return true;
+        }
+    },
+    //bet money
+    bet_money: async function (lobby_id, money_bet) {
+        let response = await fetch(apiPath + "bet_money?lobby_id=" + encodeURIComponent(lobby_id) +
+            "&money_bet=" + encodeURIComponent(money_bet));
+        if (!response.ok) {
+            let body = await response.text();
+            alert(`${this.lang["Connection to server failed!"]} \n ${response.status} ${response.statusText} \n ${body}`);
+            return false;
+        }
+        else {
+            return true;
+        }
+    },
+    //attack player
+    attack_player: async function (lobby_id, vs_player) {
+        let response = await fetch(apiPath + "attack_player?lobby_id=" + encodeURIComponent(lobby_id) +
+            "&vs_player=" + encodeURIComponent(vs_player));
+        if (!response.ok) {
+            let body = await response.text();
+            alert(`${this.lang["Connection to server failed!"]} \n ${response.status} ${response.statusText} \n ${body}`);
+            return false;
+        }
+        else {
+            return true;
+        }
+    },
+    //answer question
+    answer_question: async function (lobby_id, answer) {
+        let response = await fetch(apiPath + "answer_question?lobby_id=" + encodeURIComponent(lobby_id) +
+            "&answer=" + encodeURIComponent(answer));
+        if (!response.ok) {
+            let body = await response.text();
+            alert(`${this.lang["Connection to server failed!"]} \n ${response.status} ${response.statusText} \n ${body}`);
+            return false;
+        }
+        else {
+            return true;
+        }
+    },
+    //retrieve wrong answers from a joker
+    get_joker: async function (lobby_id) {
+        let response = await fetch(apiPath + "get_joker?lobby_id=" + encodeURIComponent(lobby_id));
+        if (!response.ok) {
+            let body = await response.text();
+            alert(`${this.lang["Connection to server failed!"]} \n ${response.status} ${response.statusText} \n ${body}`);
+            return [];
+        }
+        else {
+            let data = await response.json();
+            return data;
         }
     },
 }

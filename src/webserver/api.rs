@@ -1,11 +1,9 @@
-use actix_web::{web, error, get, post, HttpRequest, HttpResponse};
+use actix_web::{web, error, get, HttpRequest, HttpResponse};
 use actix_web::Result as HttpResult;
 use actix_session::Session;
 use serde::{Serialize, Deserialize};
-use futures::join;
 
 use crate::datahandler::DataHandler;
-use crate::game;
 use super::ensure_cookie_consent;
 
 mod lobby;

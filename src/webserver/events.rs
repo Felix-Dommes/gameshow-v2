@@ -2,9 +2,8 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::time::Instant;
 use futures::Stream;
-use actix_web::{web, error, get, HttpRequest, HttpResponse, Responder};
+use actix_web::{web, error, get, HttpRequest, HttpResponse};
 use actix_web::Result as HttpResult;
-use actix_session::Session;
 use tokio::sync::broadcast;
 
 use crate::datahandler::DataHandler;
@@ -20,7 +19,7 @@ pub fn config(cfg: &mut web::ServiceConfig)
 }
 
 #[get("/{lobby_id}")]
-async fn event_stream(db: web::Data<DataHandler>, session: Session, request: HttpRequest, lobby_id: web::Path<String>) -> HttpResult<HttpResponse>
+async fn event_stream(db: web::Data<DataHandler>, request: HttpRequest, lobby_id: web::Path<String>) -> HttpResult<HttpResponse>
 {
     ensure_cookie_consent(&request)?;
     
@@ -74,7 +73,7 @@ impl Stream for EventStreamClient
 {
     type Item = Result<web::Bytes, error::Error>;
     
-    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>>
+    fn poll_next(mut self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Option<Self::Item>>
     {
         if self.last_ping.elapsed().as_secs() >= PING_INTERVAL
         {

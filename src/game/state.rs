@@ -2,7 +2,7 @@ use std::sync::atomic::{Ordering, AtomicUsize, AtomicI64};
 use serde::{Serialize, Deserialize};
 use tokio::sync::RwLock;
 
-use super::{PlayerData, PublicPlayerData, make_public_player_data};
+use super::{PlayerData, make_public_player_data};
 use super::questions::{Question, QuestionType};
 use super::events::*;
 
@@ -22,12 +22,31 @@ pub enum LobbyState
 }
 
 
+//allow to go to the next state without checking any conditions
+pub async fn initiate_next(lobby_state: &RwLock<LobbyState>)
+{
+    let mut state = lobby_state.write().await;
+    *state = match *state
+    {
+        LobbyState::Menu(false) => LobbyState::Menu(true),
+        LobbyState::Results(false) => LobbyState::Results(true),
+        LobbyState::NormalQAnswering(false) => LobbyState::NormalQAnswering(true),
+        LobbyState::BettingQBetting(false) => LobbyState::BettingQBetting(true),
+        LobbyState::BettingQAnswering(false) => LobbyState::BettingQAnswering(true),
+        LobbyState::EstimationQAnswering(false) => LobbyState::EstimationQAnswering(true),
+        LobbyState::VersusQSelecting(false) => LobbyState::VersusQSelecting(true),
+        LobbyState::VersusQAnswering(false) => LobbyState::VersusQAnswering(true),
+        LobbyState::GameEnding(false) => LobbyState::GameEnding(true),
+        default => default,
+    };
+}
+
 //check if next question state is possible/initiated and transition
 //(by preparing everything and adding an event)
 pub async fn state_transition(
     lobby_state: &RwLock<LobbyState>,
     questions: &RwLock<Vec<Question>>,
-    current_question: &mut AtomicUsize,
+    current_question: &AtomicUsize,
     player_data: &RwLock<Vec<PlayerData>>,
     game_events: &RwLock<EventManager>,
     lobby_open: &RwLock<bool>,
@@ -35,7 +54,8 @@ pub async fn state_transition(
     param_initial_jokers: &AtomicUsize,
     param_normal_q_money: &AtomicI64,
     param_estimation_q_money: &AtomicI64,
-) {
+) -> bool //returns if finished (false=>repeat)
+{
     let mut state = lobby_state.write().await;
     match *state
     {
@@ -53,8 +73,9 @@ pub async fn state_transition(
                 player_data: make_public_player_data(&*player_access),
             });
             game_events.write().await.add(new_event);
-            //set new question state
+            //set new question state and return false to repeat
             *state = LobbyState::Results(true);
+            return false;
         },
         LobbyState::Results(true) => { //transition to next question (different states for different questions)
             //gather necessary data
@@ -334,4 +355,5 @@ pub async fn state_transition(
         LobbyState::VersusQAnswering(false) |
         LobbyState::GameEnding(false) => {},
     }
+    true
 }

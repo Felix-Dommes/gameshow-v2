@@ -1,6 +1,3 @@
-//TODO remove later
-#![allow(dead_code, unused_variables, unused_imports)]
-
 use dotenv::dotenv;
 
 mod datahandler;
