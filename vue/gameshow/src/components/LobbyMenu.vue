@@ -61,7 +61,7 @@
         </template>
       </div>
       
-      <button type="button" id="start" :disabled="this.question_set == '' || out_of_sync" @click="start_game">
+      <button type="button" id="start" :disabled="start_disabled" @click="start_game">
         <span v-if="out_of_sync" class="material-icons mirrored spinning">sync</span>
         <span v-else>{{ lang['Start game'] }}</span>
       </button>
@@ -120,15 +120,16 @@ export default {
       lobby_open: true,
       admin_plays: true,
       open_while_playing: true,
-      initial_money: "500",
-      initial_jokers: "3",
-      normal_q_money: "500",
-      estimation_q_money: "1000",
+      initial_money: 500,
+      initial_jokers: 3,
+      normal_q_money: 500,
+      estimation_q_money: 1000,
       question_set: "",
       error: false,
       error_msg: "",
       success: false,
       success_msg: "",
+      wait_for_server_start: false,
     };
   },
   computed: {
@@ -139,6 +140,9 @@ export default {
         Number(this.sync_params.normal_q_money) != Number(this.normal_q_money) ||
         Number(this.sync_params.estimation_q_money) != Number(this.estimation_q_money) ||
         this.sync_params.question_set != this.question_set);
+    },
+    start_disabled: function() {
+      return (this.question_set == '' || this.out_of_sync || this.wait_for_server_start);
     },
   },
   methods: {
@@ -209,7 +213,10 @@ export default {
         this.lobby_open = this.open_while_playing;
         await this.update_lobby();
       }
+      
+      this.wait_for_server_start = true;
       this.$emit("start-game", this.admin_plays);
+      setTimeout(function(comp) { comp.wait_for_server_start = false; }, 2000, this);
     },
   },
   mounted: function () {

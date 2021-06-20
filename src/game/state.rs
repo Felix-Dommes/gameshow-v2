@@ -105,6 +105,11 @@ pub async fn state_transition(
                     player.vs_player = "".to_owned();
                     player.answer = 0;
                 }
+                //create player update event (not for state transition yet)
+                let new_event = EventType::PlayerListUpdate(EventPlayerListUpdate {
+                    player_data: make_public_player_data(&*player_access),
+                });
+                game_events.write().await.add(new_event);
                 //depending on question type begin different question-specific event
                 match question_type
                 {
@@ -207,6 +212,11 @@ pub async fn state_transition(
                 player_data: make_public_player_data(&*player_access)
             });
             game_events.write().await.add(new_event);
+            //create event for player update
+            let new_event = EventType::PlayerListUpdate(EventPlayerListUpdate {
+                player_data: make_public_player_data(&*player_access),
+            });
+            game_events.write().await.add(new_event);
             //set new question state
             *state = LobbyState::Results(false);
         },
@@ -239,6 +249,11 @@ pub async fn state_transition(
                 correct_answer: correct_answer,
                 previous_player_data: make_public_player_data(&previous_player_data),
                 player_data: make_public_player_data(&*player_access)
+            });
+            game_events.write().await.add(new_event);
+            //create event for player update
+            let new_event = EventType::PlayerListUpdate(EventPlayerListUpdate {
+                player_data: make_public_player_data(&*player_access),
             });
             game_events.write().await.add(new_event);
             //set new question state
@@ -280,6 +295,11 @@ pub async fn state_transition(
                 correct_answer: correct_answer,
                 previous_player_data: make_public_player_data(&previous_player_data),
                 player_data: make_public_player_data(&*player_access)
+            });
+            game_events.write().await.add(new_event);
+            //create event for player update
+            let new_event = EventType::PlayerListUpdate(EventPlayerListUpdate {
+                player_data: make_public_player_data(&*player_access),
             });
             game_events.write().await.add(new_event);
             //set new question state
@@ -330,6 +350,11 @@ pub async fn state_transition(
                 correct_answer: correct_answer,
                 previous_player_data: make_public_player_data(&previous_player_data),
                 player_data: make_public_player_data(&*player_access)
+            });
+            game_events.write().await.add(new_event);
+            //create event for player update
+            let new_event = EventType::PlayerListUpdate(EventPlayerListUpdate {
+                player_data: make_public_player_data(&*player_access),
             });
             game_events.write().await.add(new_event);
             //set new question state

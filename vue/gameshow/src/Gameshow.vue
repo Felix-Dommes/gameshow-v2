@@ -10,6 +10,7 @@
           <transition name="transition" mode="out-in" appear>
             <div class="compWindow" style="text-align: center;">
               <span>{{ lang["Question"] }} {{ current_question.id }}</span>
+              <next-button v-if="nickname == admin" :lang="lang" :lobby_id="lobby" :selected_window="selectedWindow" />
             </div>
           </transition>
           
@@ -40,13 +41,33 @@
             <lobby-menu :lang="lang" :admin="nickname == admin" :lobby_id="lobby" :question_sets="question_sets" :sync_params="lobby_menu_params" @start-game="start_game" />
           </template>
           
-          <!-- TODO
-            ...
-          -->
+          <template v-else-if="selectedWindow == 'question-category-betting'">
+            <question-category-betting :lang="lang" :watch_only="watch_only" :question="current_question" :max_bet="money" @bet-money="bet_money" />
+          </template>
+          
+          <template v-else-if="selectedWindow == 'question-vs-attacker'">
+            <question-vs-attacker :lang="lang" :watch_only="watch_only" :question="current_question" :players="players" :self="nickname" @attack-player="attack_player" />
+          </template>
+          
+          <template v-else-if="selectedWindow == 'question-asker'">
+            <question-asker :lang="lang" :watch_only="watch_only" :question="current_question" :joker-available="jokers > 0" @joker="get_joker" @answered="select_answer" />
+          </template>
+          
+          <template v-else-if="selectedWindow == 'question-estimator'">
+            <question-estimator :lang="lang" :watch_only="watch_only" :question="current_question" @answered="select_answer" />
+          </template>
+          
+          <template v-else-if="selectedWindow == 'result-display'">
+            <result-display :lang="lang" :question="current_question" :players-prev="results_players_prev" :players-new="results_players_new" :self="nickname" />
+          </template>
+          
+          <template v-else-if="selectedWindow == 'game-end-screen'">
+            <game-end-screen :lang="lang" :players="results_players_new" :self="nickname" />
+          </template>
           
           <template v-else>
-            <div class="compWindow">
-              {{ lang["Waiting for players"] }}..
+            <div class="compWindow" id="waiting-window">
+              {{ lang["Waiting for players or server synchronization"] }}..
             </div>
           </template>
         </transition>
@@ -64,10 +85,17 @@ import LanguageSelector from './components/LanguageSelector.vue'
 import CookieConsent from './components/CookieConsent.vue'
 
 import PlayerList from './components/PlayerList.vue'
+import NextButton from './components/NextButton.vue'
 
 import LoginWindow from './components/LoginWindow.vue'
 import LobbySelection from './components/LobbySelection.vue'
 import LobbyMenu from './components/LobbyMenu.vue'
+import QuestionCategoryBetting from './components/QuestionCategoryBetting.vue'
+import QuestionVsAttacker from './components/QuestionVsAttacker.vue'
+import QuestionAsker from './components/QuestionAsker.vue'
+import QuestionEstimator from './components/QuestionEstimator.vue'
+import ResultDisplay from './components/ResultDisplay.vue'
+import GameEndScreen from './components/GameEndScreen.vue'
 
 export default
 {
@@ -76,9 +104,16 @@ export default
     LanguageSelector,
     CookieConsent,
     PlayerList,
+    NextButton,
     LoginWindow,
     LobbySelection,
     LobbyMenu,
+    QuestionCategoryBetting,
+    QuestionVsAttacker,
+    QuestionAsker,
+    QuestionEstimator,
+    ResultDisplay,
+    GameEndScreen,
   },
   data: () => { return {
     lang: lang.en,
@@ -94,10 +129,12 @@ export default
     money: 1,
     jokers: 0,
     players: [],
+    current_question: {id: 0, type: "", category: "", question: "", answers: [], correct_answer: 0, wrong_answers: []},
+    
     results_players_prev: [],
     results_players_new: [],
-    current_question: {id: 0, type: "", category: "", question: "", answers: [], correct_answer: 0, wrong_answers: []},
     animation_in_progress: false,
+    players_cached: [],
     
     event_stream: null,
     last_event_id: -1,
@@ -116,6 +153,12 @@ export default
       question_set: ""
     },
   }; },
+  computed: {
+    watch_only: function()
+    {
+      return ((this.admin == this.nickname && !this.admin_plays) || !this.joined);
+    },
+  },
   methods: {
     switchLanguage: function(language)
     {
@@ -186,9 +229,9 @@ export default
       this.admin = result.admin;
       this.nickname = result.new_name;
       this.joined = true;
+      this.selectedWindow = "lobby-menu";
       await this.setup_event_listener();
       window.history.pushState("lobby", "Gameshow Lobby", "#" + lobby_id);
-      this.selectedWindow = "lobby-menu";
     },
     join_lobby: async function(lobby_id)
     {
@@ -202,15 +245,10 @@ export default
       this.admin = result.admin;
       this.nickname = result.new_name;
       this.joined = true;
+      this.selectedWindow = "lobby-menu";
       await this.setup_event_listener();
       window.history.pushState("lobby", "Gameshow Lobby", "#" + lobby_id);
-      this.selectedWindow = "lobby-menu";
       return true;
-    },
-    admin_left: async function()
-    {
-      this.admin_plays = false;
-      this.joined = false;
     },
     setup_event_listener: async function()
     {
@@ -222,8 +260,14 @@ export default
       this.event_queue = await api.get_events(this.lobby);
       this.handle_event_queue();
     },
+    admin_left: async function()
+    {
+      this.admin_plays = false;
+      this.joined = false;
+    },
     start_game: async function(admin_plays)
     {
+      //control that admin is in lobby or not
       this.admin_plays = admin_plays;
       if (this.admin == this.nickname)
       {
@@ -244,8 +288,36 @@ export default
           }
         }
       }
-      
-      //TODO start game
+      //start game
+      if (await api.next_state(this.lobby))
+      {
+        this.waitForPlayers();
+      }
+    },
+    bet_money: async function(money)
+    {
+      if (await api.bet_money(this.lobby, money))
+      {
+        this.waitForPlayers();
+      }
+    },
+    attack_player: async function(player)
+    {
+      if (await api.attack_player(this.lobby, player))
+      {
+        this.waitForPlayers();
+      }
+    },
+    select_answer: async function(answer)
+    {
+      if (await api.answer_question(this.lobby, answer))
+      {
+        this.waitForPlayers();
+      }
+    },
+    get_joker: async function()
+    {
+      this.current_question.wrong_answers = await api.get_joker(this.lobby);
     },
     
     waitForPlayers: function()
@@ -254,7 +326,11 @@ export default
     },
     finishedAnimation: function()
     {
-      this.animation_in_progress = false;
+      if (this.animation_in_progress)
+      {
+        this.animation_in_progress = false;
+        this.players = this.players_cached;
+      }
     },
     
     handle_event_queue: function()
@@ -321,7 +397,7 @@ export default
     },
     eventBeginNormalQAnswering: function(event)
     {
-      this.animation_in_progress = false;
+      this.finishedAnimation();
       this.current_question.id = event.current_question;
       this.current_question.type = event.question_type;
       this.current_question.category = event.category;
@@ -333,7 +409,7 @@ export default
     },
     eventBeginBettingQBetting: function(event)
     {
-      this.animation_in_progress = false;
+      this.finishedAnimation();
       this.current_question.id = event.current_question;
       this.current_question.type = event.question_type;
       this.current_question.category = event.category;
@@ -351,7 +427,7 @@ export default
     },
     eventBeginEstimationQAnswering: function(event)
     {
-      this.animation_in_progress = false;
+      this.finishedAnimation();
       this.current_question.id = event.current_question;
       this.current_question.type = event.question_type;
       this.current_question.category = event.category;
@@ -363,7 +439,7 @@ export default
     },
     eventBeginVersusQSelecting: function(event)
     {
-      this.animation_in_progress = false;
+      this.finishedAnimation();
       this.current_question.id = event.current_question;
       this.current_question.type = event.question_type;
       this.current_question.category = event.category;
@@ -391,7 +467,7 @@ export default
     },
     eventGameEnding: function(event)
     {
-      this.animation_in_progress = false;
+      this.finishedAnimation();
       this.current_question.type = "";
       
       this.results_players_new = event.player_data;
@@ -399,7 +475,7 @@ export default
     },
     eventBackToMenu: function(event)
     {
-      this.animation_in_progress = false;
+      this.finishedAnimation();
       this.current_question.type = "";
       
       this.lobby_menu_params.open = event.open;
@@ -407,10 +483,9 @@ export default
     },
     eventPlayerListUpdate: function(event)
     {
-      //TODO ? if (!this.animation_in_progress)
-      this.players = event.player_data;
+      this.players_cached = event.player_data;
       let found_myself = false;
-      for (var player of this.players)
+      for (const player of this.players_cached)
       {
         if (player.name == this.nickname)
         {
@@ -420,6 +495,7 @@ export default
         }
       }
       this.joined = found_myself;
+      if (!this.animation_in_progress) this.players = this.players_cached;
     },
     eventLobbySettingsUpdate: function(event)
     {
@@ -488,11 +564,21 @@ export default
   text-shadow: 3px 2px 4px #222222;
 }
 
+#waiting-window
+{
+  max-width: 60vw;
+}
+
+/*@media only screen and (max-width: 1000px)*/
 @media (max-width: 50rem)
 {
   .compWindow
   {
     font-size: large;
+  }
+  #waiting-window
+  {
+    max-width: 100vw;
   }
 }
 
@@ -504,5 +590,14 @@ export default
 .transition-enter-active, .transition-leave-active, .transition-move
 {
   transition: all 0.5s ease;
+}
+
+input[type=button], input[type=submit], button
+{
+  cursor: pointer;
+}
+input[type=button][disabled], input[type=submit][disabled], button[disabled]
+{
+  cursor: not-allowed;
 }
 </style>
