@@ -314,7 +314,7 @@ impl Gameshow
             //make sure the name is unique
             while name_in_use || name == admin_name
             {
-                name += "2";
+                name += &generate_random_string(2);
                 name_in_use = false;
                 for player in (*player_access).iter()
                 {
@@ -727,4 +727,20 @@ fn make_public_player_data(players: &Vec<PlayerData>) -> Vec<PublicPlayerData>
             answer: player.answer,
         }
     }).collect()
+}
+
+fn generate_random_string(length: usize) -> String
+{
+    let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ\
+                    abcdefghijklmnopqrstuvwxyz\
+                    0123456789-_";
+    let choose_from: Vec<char> = characters.chars().collect();
+    
+    let mut rng = rand::thread_rng();
+    let mut rnd_string = String::from("");
+    for _ in 0..length
+    {
+        rnd_string.push(choose_from.choose(&mut rng).unwrap().to_owned());
+    }
+    return rnd_string;
 }

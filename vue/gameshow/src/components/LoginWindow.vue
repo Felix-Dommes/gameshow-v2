@@ -2,7 +2,7 @@
   <div class="compWindow">
     <form @submit.prevent="submit_name">
       <label for="name">{{ lang["Name"] }}:</label>
-      <input type="text" name="name" :placeholder="'<'+lang['Name']+'>'" v-model.trim="nickname" autofocus id="login-input" class="input">
+      <input type="text" name="name" :placeholder="'<'+lang['Name']+'>'" v-model.trim="nickname" autofocus id="login-input" class="input" maxlength="25">
       <br>
       <template v-if="error">
         <span class="error">{{ error_msg }}</span>
@@ -27,8 +27,13 @@ export default {
     {
       if (this.nickname == "")
       {
-        this.error = true;
         this.error_msg = this.lang["Name must not be empty!"];
+        this.error = true;
+      }
+      else if (this.nickname.length > 25)
+      {
+        this.error_msg = this.lang["Name is too long! At most 25 characters!"];
+        this.error = true;
       }
       else
       {

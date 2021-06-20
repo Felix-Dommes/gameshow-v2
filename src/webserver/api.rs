@@ -1,3 +1,4 @@
+use std::env;
 use actix_web::{web, error, get, HttpRequest, HttpResponse};
 use actix_web::Result as HttpResult;
 use actix_session::Session;
@@ -7,6 +8,8 @@ use crate::datahandler::DataHandler;
 use super::ensure_cookie_consent;
 
 mod lobby;
+
+const MAX_NICKNAME_LENGTH:usize = 25;
 
 
 pub fn config(cfg: &mut web::ServiceConfig)
@@ -28,6 +31,13 @@ struct SetNameData
 async fn set_name(db: web::Data<DataHandler>, session: Session, request: HttpRequest, params: web::Query<SetNameData>) -> HttpResult<HttpResponse>
 {
     ensure_cookie_consent(&request)?;
+    
+    //get maximum name length
+    let max_nickname_length = env::var("MAX_NICKNAME_LENGTH").unwrap_or_default().parse().unwrap_or(MAX_NICKNAME_LENGTH);
+    if params.name.len() > max_nickname_length //use params.name.chars().count() ?
+    {
+        return Err(error::ErrorBadRequest(format!("Name is too long! Maximum length is {}!", max_nickname_length)));
+    }
     
     //check if user exists before and possible change name only
     if let Some(uuid) = session.get::<String>("uuid")?

@@ -74,6 +74,7 @@ export default {
         "and assumes it is;results-vs": "and assumes it is",
         "assumes it is": "assumes it is",
         "says": "says",
+        "Name is too long! At most 25 characters!": "Name is too long! At most 25 characters!",
     },
     de: {
         "Something went wrong! Reloading page..": "Etwas ist schief gelaufen! Seite wird neu geladen..",
@@ -149,5 +150,6 @@ export default {
         "and assumes it is;results-vs": "an und tippt auf",
         "assumes it is": "tippt auf",
         "says": "sagt",
+        "Name is too long! At most 25 characters!": "Name ist zu lang! Maximal 25 Zeichen sind erlaubt!",
     },
 }
