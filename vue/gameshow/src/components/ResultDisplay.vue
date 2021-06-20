@@ -70,11 +70,16 @@ export default {
         { "correct": false, "clicked": false },
         { "correct": false, "clicked": false }
       ],
-      answerChar: [this.lang["Nothing"], "a)", "b)", "c)", "d)"],
       showBetsOrVersus: false,
       showAnswers: false,
       showCorrectAnswer: false,
     };
+  },
+  computed: {
+    answerChar: function()
+    {
+      return [this.lang["Nothing"], "a)", "b)", "c)", "d)"];
+    },
   },
   methods: {
     revealBets: function()

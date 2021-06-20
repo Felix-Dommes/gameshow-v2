@@ -169,26 +169,27 @@ export default {
         //read file and upload as soon as loaded
         const file_reader = new FileReader();
         file_reader.addEventListener("load", async (event) => {
+          let questions;
           try
           {
-            const questions = JSON.parse(event.target.result);
-            if (await api.upload_custom_questions(this.lobby_id, questions))
-            {
-              this.error = false;
-              this.success_msg = this.lang["Questions uploaded!"];
-              this.success = true;
-            }
-            else
-            {
-              this.success = false;
-              this.error_msg = this.lang["Upload error!"];
-              this.error = true;
-            }
+            questions = JSON.parse(event.target.result);
           }
           catch (e)
           {
             this.success = false;
             this.error_msg = this.lang["Invalid JSON!"];
+            this.error = true;
+          }
+          if (await api.upload_custom_questions(this.lobby_id, questions))
+          {
+            this.error = false;
+            this.success_msg = this.lang["Questions uploaded!"];
+            this.success = true;
+          }
+          else
+          {
+            this.success = false;
+            this.error_msg = this.lang["Upload error!"];
             this.error = true;
           }
         });
@@ -221,6 +222,16 @@ export default {
   },
   mounted: function () {
     document.getElementById("invite-link").focus();
+    //with a small delay, so that the server events get loaded first, ..
+    setTimeout(() => {
+      //.. set settings to those present from the server on menu reload
+      this.lobby_open = Boolean(this.sync_params.lobby_open);
+      this.initial_money = Number(this.sync_params.initial_money);
+      this.initial_jokers = Number(this.sync_params.initial_jokers);
+      this.normal_q_money = Number(this.sync_params.normal_q_money);
+      this.estimation_q_money = Number(this.sync_params.estimation_q_money);
+      this.question_set = this.sync_params.question_set;
+    }, 500);
   },
 };
 </script>
