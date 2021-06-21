@@ -60,5 +60,7 @@ pub fn find_question_files() -> std::io::Result<Vec<(String, PathBuf)>>
         }
     }
     
+    //return a sorted list
+    list.sort_unstable_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
     Ok(list)
 }
