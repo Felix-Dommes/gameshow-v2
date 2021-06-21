@@ -42,7 +42,7 @@ export default {
 .background
 {
   position: absolute;
-  z-index: 1000;
+  z-index: 900;
   top: 0;
   left: 0;
   width: 100vw;

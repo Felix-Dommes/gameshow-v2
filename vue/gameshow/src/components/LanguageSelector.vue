@@ -10,10 +10,11 @@ import global from '../assets/global.js'
 
 export default {
   name: 'LanguageSelector',
+  props: ["consent"],
   methods: {
     set_lang: function(language)
     {
-        document.cookie = "language=" + encodeURIComponent(language);
+        if (this.consent) document.cookie = "language=" + encodeURIComponent(language);
         this.$emit("set-lang", language);
     },
   },
@@ -29,7 +30,7 @@ export default {
 <style scoped>
 .window
 {
-  z-index: 100;
+  z-index: 1100;
   position: fixed;
   top: -2px;
   right: 0px;

@@ -1,6 +1,6 @@
 <template>
   <div id="gameshow">
-    <language-selector @set-lang="switchLanguage" />
+    <language-selector :consent="consent" @set-lang="switchLanguage" />
     <cookie-consent :lang="lang" @consent="got_consent" />
     
     <div class="mainWindow">
