@@ -31,7 +31,11 @@ pub async fn startup(db: DataHandler) -> std::io::Result<()>
             .wrap(CookieSession::private(&[0; 32]).secure(false).lazy(true))
             
             //load modules
-            .service(web::scope("/api").configure(api::config))
+            .service(
+                web::scope("/api")
+                    .wrap(middleware::DefaultHeaders::new().header("Cache-Control", "no-cache"))
+                    .configure(api::config)
+            )
             .service(web::scope("/events").configure(events::config))
             
             //static files

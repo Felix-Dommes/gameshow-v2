@@ -160,7 +160,7 @@ async fn get_events(db: web::Data<DataHandler>, request: HttpRequest, params: we
     if db_lobby.is_some()
     {
         let lobby = db_lobby.unwrap();
-        return Ok(HttpResponse::Ok().json(lobby.get_events().await));
+        return Ok(HttpResponse::Ok().header("Cache-Control", "no-cache").json(lobby.get_events().await));
     }
     else
     {
@@ -183,7 +183,7 @@ async fn get_player_data(db: web::Data<DataHandler>, request: HttpRequest, param
     if db_lobby.is_some()
     {
         let lobby = db_lobby.unwrap();
-        return Ok(HttpResponse::Ok().json(lobby.get_player_data().await));
+        return Ok(HttpResponse::Ok().header("Cache-Control", "no-cache").json(lobby.get_player_data().await));
     }
     else
     {
