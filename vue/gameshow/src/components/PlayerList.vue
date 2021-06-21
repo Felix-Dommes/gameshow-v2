@@ -24,23 +24,25 @@
           <div class="compWindow" v-if="edit_popup" @click.stop>
             <span class="yellow">{{ lang["Edit player"] }}</span>
             <span class="material-icons clickable" id="close-icon" @click="close_popup">close</span>
-            <table>
-              <tr>
-                <td><label>{{ editing_player.name }}</label></td>
-                <td><input type="button" :value="lang['Kick']" @click="kick_player"></td>
-              </tr>
-              <tr>
-                <td><label for="money">{{ lang["Money"] }}: </label></td>
-                <td><input type="number" name="money" v-model.number="editing_player.money" min="1"></td>
-              </tr>
-              <tr>
-                <td><label for="jokers">{{ lang["Jokers"] }}: </label></td>
-                <td><input type="number" name="jokers" v-model.number="editing_player.jokers" min="1"></td>
-              </tr>
-              <tr>
-                <td colspan="2"><input type="button" id="save" :value="lang['Save']" @click="save_player"></td>
-              </tr>
-            </table>
+            <form @submit.prevent="save_player">
+              <table>
+                <tr>
+                  <td><label>{{ editing_player.name }}</label></td>
+                  <td><input type="button" :value="lang['Kick']" @click="kick_player"></td>
+                </tr>
+                <tr>
+                  <td><label for="money">{{ lang["Money"] }}: </label></td>
+                  <td><input type="number" name="money" v-model.number="editing_player.money" min="1"></td>
+                </tr>
+                <tr>
+                  <td><label for="jokers">{{ lang["Jokers"] }}: </label></td>
+                  <td><input type="number" name="jokers" v-model.number="editing_player.jokers" min="1"></td>
+                </tr>
+                <tr>
+                  <td colspan="2"><input type="submit" id="save" :value="lang['Save']"></td>
+                </tr>
+              </table>
+            </form>
           </div>
         </transition>
       </div>
@@ -173,14 +175,14 @@ input[type=text], input[type=number]
   top: -0.5ex;
 }
 
-input[type=button]
+input[type=button], input[type=submit]
 {
   height: 3em;
   position: relative;
   top: -0.5ex;
 }
 
-input[type=button]#save
+input[type=button]#save, input[type=submit]#save
 {
   width: 100%;
   height: 4em;

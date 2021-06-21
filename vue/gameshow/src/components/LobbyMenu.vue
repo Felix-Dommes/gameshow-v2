@@ -2,8 +2,8 @@
   <div class="compWindow">
     <div style="margin-bottom: 1ex;">
       <label for="invite-link">{{ lang['Invite link'] }}: </label>
-      <input type="text" class="input" name="invite-link" id="invite-link" :value="invite_link" readonly autofocus>
-      <input type="button" class="button" :value="lang['Copy']" @click="copy_invite_link">
+      <input type="text" name="invite-link" id="invite-link" :value="invite_link" readonly autofocus>
+      <input type="button" :value="lang['Copy']" @click="copy_invite_link">
     </div>
     
     <template v-if="admin">
