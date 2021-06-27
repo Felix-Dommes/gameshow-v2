@@ -8,14 +8,14 @@
       <div class="sidebar">
         <template v-if="nickname != '' && lobby != ''">
           <transition name="transition" mode="out-in" appear>
-            <div class="compWindow" style="text-align: center;">
+            <div class="compWindow" style="text-align: center;" key="question">
               <span>{{ lang["Question"] }} {{ current_question.id }}</span>
               <next-button v-if="nickname == admin" :lang="lang" :lobby_id="lobby" :selected_window="selectedWindow" />
             </div>
           </transition>
           
           <transition name="transition" mode="out-in" appear>
-            <player-list :lang="lang" :players="players" :self="nickname" :admin="admin" :lobby_id="lobby" :question_type="current_question.type" @admin-leaves="admin_left" />
+            <player-list :lang="lang" :players="players" :self="nickname" :admin="admin" :lobby_id="lobby" :question_type="current_question.type" @admin-leaves="admin_left" key="player-list" />
           </transition>
         </template>
       </div>
@@ -24,49 +24,49 @@
       <div class="mainStage">
         <transition name="transition" mode="out-in" appear>
           <template v-if="selectedWindow == 'loading'">
-            <div class="compWindow">
+            <div class="compWindow" key="loading">
               {{ lang["Loading"] }}..
             </div>
           </template>
           
           <template v-else-if="selectedWindow == 'login-window'">
-            <login-window :lang="lang" @set-name="set_name" />
+            <login-window :lang="lang" @set-name="set_name" key="login-window" />
           </template>
           
           <template v-else-if="selectedWindow == 'lobby-selection'">
-            <lobby-selection :lang="lang" :join_errors="lobby_selection_params" @create-lobby="create_lobby" @join-lobby="join_lobby" />
+            <lobby-selection :lang="lang" :join_errors="lobby_selection_params" @create-lobby="create_lobby" @join-lobby="join_lobby" key="lobby-selection" />
           </template>
           
           <template v-else-if="selectedWindow == 'lobby-menu'">
-            <lobby-menu :lang="lang" :admin="nickname == admin" :lobby_id="lobby" :question_sets="question_sets" :sync_params="lobby_menu_params" @start-game="start_game" />
+            <lobby-menu :lang="lang" :admin="nickname == admin" :lobby_id="lobby" :question_sets="question_sets" :sync_params="lobby_menu_params" @start-game="start_game" key="lobby-menu" />
           </template>
           
           <template v-else-if="selectedWindow == 'question-category-betting'">
-            <question-category-betting :lang="lang" :watch_only="watch_only" :question="current_question" :max_bet="money" @bet-money="bet_money" />
+            <question-category-betting :lang="lang" :watch_only="watch_only" :question="current_question" :max_bet="money" @bet-money="bet_money" key="question-category-betting" />
           </template>
           
           <template v-else-if="selectedWindow == 'question-vs-attacker'">
-            <question-vs-attacker :lang="lang" :watch_only="watch_only" :question="current_question" :players="players" :self="nickname" @attack-player="attack_player" />
+            <question-vs-attacker :lang="lang" :watch_only="watch_only" :question="current_question" :players="players" :self="nickname" @attack-player="attack_player" key="question-vs-attacker" />
           </template>
           
           <template v-else-if="selectedWindow == 'question-asker'">
-            <question-asker :lang="lang" :watch_only="watch_only" :question="current_question" :joker-available="jokers > 0" @joker="get_joker" @answered="select_answer" />
+            <question-asker :lang="lang" :watch_only="watch_only" :question="current_question" :joker-available="jokers > 0" @joker="get_joker" @answered="select_answer" key="question-asker" />
           </template>
           
           <template v-else-if="selectedWindow == 'question-estimator'">
-            <question-estimator :lang="lang" :watch_only="watch_only" :question="current_question" @answered="select_answer" />
+            <question-estimator :lang="lang" :watch_only="watch_only" :question="current_question" @answered="select_answer" key="question-estimator" />
           </template>
           
           <template v-else-if="selectedWindow == 'result-display'">
-            <result-display :lang="lang" :question="current_question" :players-prev="results_players_prev" :players-new="results_players_new" :self="nickname" />
+            <result-display :lang="lang" :question="current_question" :players-prev="results_players_prev" :players-new="results_players_new" :self="nickname" key="result-display" />
           </template>
           
           <template v-else-if="selectedWindow == 'game-end-screen'">
-            <game-end-screen :lang="lang" :players="results_players_new" :self="nickname" />
+            <game-end-screen :lang="lang" :players="results_players_new" :self="nickname" key="game-end-screen" />
           </template>
           
           <template v-else>
-            <div class="compWindow" id="waiting-window">
+            <div class="compWindow" id="waiting-window" key="waiting">
               {{ lang["Waiting for players and server.."] }}
             </div>
           </template>

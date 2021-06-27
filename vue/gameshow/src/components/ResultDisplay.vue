@@ -124,7 +124,7 @@ export default {
     this.timeouts.push( setTimeout(function(comp) { comp.revealAnswers(); }, 8000, this) );
     this.timeouts.push( setTimeout(function(comp) { comp.revealCorrectAnswer(); }, 15000, this) );
   },
-  beforeUnmount: function() { //TODO why is this not called?
+  beforeDestroy: function() {
     this.removeTimeouts();
   },
 };
