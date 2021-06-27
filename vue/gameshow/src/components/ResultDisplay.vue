@@ -1,5 +1,26 @@
 <template>
   <div>
+    <div class="compWindow">
+      <table class="question-design">
+        <tr><td colspan="2" class="quizElement">{{ question.question }}</td></tr>
+        <tr></tr>
+        <template v-if="question.type != 'EstimationQuestion'">
+          <tr>
+            <td class="quizElement answer" v-bind:class="quizAnsClasses[0]">a) {{ question.answers[0] }}</td>
+            <td class="quizElement answer" v-bind:class="quizAnsClasses[1]">b) {{ question.answers[1] }}</td>
+          </tr>
+          <tr>
+            <td class="quizElement answer" v-bind:class="quizAnsClasses[2]">c) {{ question.answers[2] }}</td>
+            <td class="quizElement answer" v-bind:class="quizAnsClasses[3]">d) {{ question.answers[3] }}</td>
+          </tr>
+        </template>
+        <template v-else>
+          <tr>
+            <td colspan="2" style="font-size: large;">{{ lang["Correct answer"] }}: {{ showCorrectAnswer ? question.correct_answer : "???" }}</td>
+          </tr>
+        </template>
+      </table>
+    </div>
     <div class="compWindow" style="padding: 1ex 1em;">
       <span class="yellow">{{ lang["The Players' Answers"] }}</span>
       <table class="nameList">
@@ -32,27 +53,6 @@
             <td>{{ (playersNew[index].money > player.money ? "+" : "") + (playersNew[index].money - player.money).toString() }} €</td>
           </template>
         </tr>
-      </table>
-    </div>
-    <div class="compWindow">
-      <table class="question-design">
-        <tr><td colspan="2" class="quizElement">{{ question.question }}</td></tr>
-        <tr></tr>
-        <template v-if="question.type != 'EstimationQuestion'">
-          <tr>
-            <td class="quizElement answer" v-bind:class="quizAnsClasses[0]">a) {{ question.answers[0] }}</td>
-            <td class="quizElement answer" v-bind:class="quizAnsClasses[1]">b) {{ question.answers[1] }}</td>
-          </tr>
-          <tr>
-            <td class="quizElement answer" v-bind:class="quizAnsClasses[2]">c) {{ question.answers[2] }}</td>
-            <td class="quizElement answer" v-bind:class="quizAnsClasses[3]">d) {{ question.answers[3] }}</td>
-          </tr>
-        </template>
-        <template v-else>
-          <tr>
-            <td colspan="2" style="font-size: large;">{{ lang["Correct answer"] }}: {{ showCorrectAnswer ? question.correct_answer : "???" }}</td>
-          </tr>
-        </template>
       </table>
     </div>
   </div>
