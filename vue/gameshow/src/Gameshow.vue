@@ -67,7 +67,7 @@
           
           <template v-else>
             <div class="compWindow" id="waiting-window">
-              {{ lang["Waiting for players or server synchronization"] }}..
+              {{ lang["Waiting for players and server.."] }}
             </div>
           </template>
         </transition>
@@ -255,7 +255,7 @@ export default
       this.event_stream = await api.get_event_stream(this.lobby);
       this.event_stream.addEventListener("ping", () => { this.handle_event_queue(); });
       this.event_stream.addEventListener("game_event", (event) => {
-        this.handle_event(JSON.parse(event.data));
+        this.handle_new_event(JSON.parse(event.data));
       });
       this.event_queue = await api.get_events(this.lobby);
       this.handle_event_queue();
@@ -289,30 +289,38 @@ export default
         }
       }
       //start game
-      if (await api.next_state(this.lobby))
+      const prevSelected = this.selectedWindow;
+      this.waitForPlayers();
+      if (!await api.next_state(this.lobby))
       {
-        this.waitForPlayers();
+        this.selectedWindow = prevSelected;
       }
     },
     bet_money: async function(money)
     {
-      if (await api.bet_money(this.lobby, money))
+      const prevSelected = this.selectedWindow;
+      this.waitForPlayers();
+      if (!await api.bet_money(this.lobby, money))
       {
-        this.waitForPlayers();
+        this.selectedWindow = prevSelected;
       }
     },
     attack_player: async function(player)
     {
-      if (await api.attack_player(this.lobby, player))
+      const prevSelected = this.selectedWindow;
+      this.waitForPlayers();
+      if (!await api.attack_player(this.lobby, player))
       {
-        this.waitForPlayers();
+        this.selectedWindow = prevSelected;
       }
     },
     select_answer: async function(answer)
     {
-      if (await api.answer_question(this.lobby, answer))
+      const prevSelected = this.selectedWindow;
+      this.waitForPlayers();
+      if (!await api.answer_question(this.lobby, answer))
       {
-        this.waitForPlayers();
+        this.selectedWindow = prevSelected;
       }
     },
     get_joker: async function()

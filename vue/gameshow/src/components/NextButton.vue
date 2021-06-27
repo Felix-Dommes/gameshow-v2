@@ -35,7 +35,7 @@ export default {
       this.waiting_for_server = true;
       if (await api.next_state(this.lobby_id))
       {
-        setTimeout(function(comp) { comp.waiting_for_server = false; }, 5000, this);
+        setTimeout(function(comp) { comp.waiting_for_server = false; }, 2000, this);
       }
       else
       {

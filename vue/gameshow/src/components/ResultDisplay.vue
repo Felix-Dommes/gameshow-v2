@@ -73,6 +73,7 @@ export default {
       showBetsOrVersus: false,
       showAnswers: false,
       showCorrectAnswer: false,
+      timeouts: [],
     };
   },
   computed: {
@@ -108,11 +109,23 @@ export default {
         this.quizAnsClasses[this.question.correct_answer - 1]["correct"] = true;
       }
     },
+    
+    removeTimeouts: function()
+    {
+      for (const timeout of this.timeouts)
+      {
+        clearTimeout(timeout);
+      }
+      this.timeouts = [];
+    },
   },
   mounted: function() {
-    setTimeout(function(comp) { comp.revealBets(); }, 3000, this);
-    setTimeout(function(comp) { comp.revealAnswers(); }, 8000, this);
-    setTimeout(function(comp) { comp.revealCorrectAnswer(); }, 15000, this);
+    this.timeouts.push( setTimeout(function(comp) { comp.revealBets(); }, 3000, this) );
+    this.timeouts.push( setTimeout(function(comp) { comp.revealAnswers(); }, 8000, this) );
+    this.timeouts.push( setTimeout(function(comp) { comp.revealCorrectAnswer(); }, 15000, this) );
+  },
+  beforeUnmount: function() { //TODO why is this not called?
+    this.removeTimeouts();
   },
 };
 </script>

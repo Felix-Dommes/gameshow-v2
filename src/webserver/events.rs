@@ -1,16 +1,18 @@
 use std::pin::Pin;
 use std::task::{Context, Poll};
-use std::time::Instant;
-use futures::Stream;
+use std::time::Duration;
 use actix_web::{web, error, get, HttpRequest, HttpResponse};
 use actix_web::Result as HttpResult;
 use tokio::sync::broadcast;
+use tokio_stream::wrappers::BroadcastStream;
+use actix_web::rt;
+use futures::Stream;
 
 use crate::datahandler::DataHandler;
 use crate::game::Event;
 use super::ensure_cookie_consent;
 
-const PING_INTERVAL:u64 = 5; //interval to ping clients in seconds
+const PING_INTERVAL:u64 = 10; //interval to ping clients in seconds
 
 
 pub fn config(cfg: &mut web::ServiceConfig)
@@ -43,8 +45,8 @@ async fn event_stream(db: web::Data<DataHandler>, request: HttpRequest, lobby_id
 
 struct EventStreamClient
 {
-    receiver: broadcast::Receiver<Event>,
-    last_ping: Instant,
+    event_source: BroadcastStream<Event>,
+    pinger: rt::time::Interval,
 }
 
 impl EventStreamClient
@@ -52,8 +54,8 @@ impl EventStreamClient
     pub fn new(event_source: broadcast::Receiver<Event>) -> Self
     {
         EventStreamClient {
-            receiver: event_source,
-            last_ping: Instant::now(),
+            event_source: BroadcastStream::new(event_source),
+            pinger: rt::time::interval(Duration::from_secs(PING_INTERVAL)),
         }
     }
     
@@ -69,82 +71,27 @@ impl EventStreamClient
     }
 }
 
-impl Stream for EventStreamClient
-{
-    type Item = Result<web::Bytes, error::Error>;
-    
-    fn poll_next(mut self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Option<Self::Item>>
-    {
-        if self.last_ping.elapsed().as_secs() >= PING_INTERVAL
-        {
-            self.last_ping = Instant::now();
-            return Poll::Ready(Some(Ok(EventStreamClient::ping())));
-        }
-        else
-        {
-            match self.receiver.try_recv()
-            {
-                Ok(content) => Poll::Ready(Some(Ok(EventStreamClient::event_to_bytes(content)))),
-                Err(broadcast::error::TryRecvError::Closed) => Poll::Ready(None),
-                Err(broadcast::error::TryRecvError::Lagged(_)) => Poll::Ready(None), //close connection when messages were lost
-                Err(broadcast::error::TryRecvError::Empty) => Poll::Pending,
-            }
-        }
-    }
-}
-
-/*
-use std::time::Duration;
-use tokio::time;
-
-struct EventStreamClient
-{
-    receiver: broadcast::Receiver<Event>,
-    pinger: time::Interval,
-}
-
-impl EventStreamClient
-{
-    pub fn new(event_source: broadcast::Receiver<Event>) -> Self
-    {
-        EventStreamClient {
-            receiver: event_source,
-            pinger: time::interval(Duration::from_secs(PING_INTERVAL)),
-        }
-    }
-    
-    fn ping() -> web::Bytes
-    {
-        web::Bytes::from("event: ping\ndata: \"ping\"\n\n")
-    }
-    
-    fn event_to_bytes(event: Event) -> web::Bytes
-    {
-        let data = serde_json::to_string(&event).unwrap();
-        web::Bytes::from(format!("event: game_event\ndata: {}\n\n", data))
-    }
-}
-
+use tokio_stream::wrappers::errors::BroadcastStreamRecvError;
 impl Stream for EventStreamClient
 {
     type Item = Result<web::Bytes, error::Error>;
     
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>>
     {
-        if let Poll::Ready(_) = self.pinger.poll_tick(cx)
+        //if let Poll::Ready(_) = Pin::new(&mut self.pinger).poll_next(cx) //will register wakeup through cx.waker() on pending
+        if let Poll::Ready(_) = self.pinger.poll_tick(cx) //will register wakeup through cx.waker() on pending
         {
             return Poll::Ready(Some(Ok(EventStreamClient::ping())));
         }
         else
         {
-            match self.receiver.try_recv()
+            match Pin::new(&mut self.event_source).poll_next(cx) //will register wakeup through cx.waker() on pending
             {
-                Ok(content) => Poll::Ready(Some(Ok(EventStreamClient::event_to_bytes(content)))),
-                Err(broadcast::error::TryRecvError::Closed) => Poll::Ready(None),
-                Err(broadcast::error::TryRecvError::Lagged(_)) => Poll::Ready(None), //close connection when messages were lost
-                Err(broadcast::error::TryRecvError::Empty) => Poll::Pending,
+                Poll::Ready(Some(Ok(content))) => Poll::Ready(Some(Ok(EventStreamClient::event_to_bytes(content)))),
+                Poll::Ready(None) => Poll::Ready(None), //event sender connection was closed
+                Poll::Ready(Some(Err(BroadcastStreamRecvError::Lagged(_)))) => Poll::Ready(None), //close connection when messages were lost
+                Poll::Pending => Poll::Pending,
             }
         }
     }
 }
-*/

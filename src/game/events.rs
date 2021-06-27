@@ -17,7 +17,7 @@ impl EventManager
 {
     pub fn new() -> Self
     {
-        let (sender, _receiver) = broadcast::channel(20);
+        let (sender, _receiver) = broadcast::channel(50);
         EventManager {
             events: Vec::new(),
             event_sender: sender,
