@@ -59,8 +59,8 @@
       </div>
       
       <button type="button" id="start" :disabled="start_disabled" @click="start_game">
-        <span v-if="out_of_sync" class="material-icons mirrored spinning">sync</span>
-        <span v-else>{{ lang['Start game'] }}</span>
+        <span v-show="out_of_sync" class="material-icons mirrored spinning">sync</span>
+        <span v-show="!out_of_sync">{{ lang['Start game'] }}</span>
       </button>
     </template>
     
@@ -253,6 +253,11 @@ button#start
 {
   width: 100%;
   height: 4em;
+}
+
+span
+{
+  font-size: 100%;
 }
 
 .mirrored
