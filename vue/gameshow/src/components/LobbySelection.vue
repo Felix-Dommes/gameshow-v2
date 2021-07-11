@@ -5,8 +5,8 @@
     </form>
     <br>
     <form @submit.prevent="button_join_lobby">
-      <label for="lobbyID">{{ lang["Join lobby"] }}:</label>
-      <input type="text" name="lobbyID" :placeholder="'<'+lang['Lobby ID']+'>'" v-model.trim="lobby_id" autofocus id="lobby-input" class="input">
+      <label for="lobby-input">{{ lang["Join lobby"] }}:</label>
+      <input type="text" id="lobby-input" :placeholder="'<'+lang['Lobby ID']+'>'" v-model.trim="lobby_id" autofocus class="input">
       <br>
       <template v-if="error">
         <span class="error">{{ error_msg }}</span>

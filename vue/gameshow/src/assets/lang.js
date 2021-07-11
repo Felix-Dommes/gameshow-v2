@@ -1,9 +1,6 @@
 export default {
     name: "lang",
     en: {
-        "Something went wrong! Reloading page..": "Something went wrong! Reloading page..",
-        "": "TODO: add text",
-        
         "Accept": "Accept",
         "This site uses (only functional) cookies!": "This site uses (only functional) cookies!",
         "Question": "Question",
@@ -20,8 +17,8 @@ export default {
         "Join lobby": "Join lobby",
         "Lobby ID was not found!": "Lobby ID was not found!",
         "Lobby open for new players": "Lobby open for new players",
+        "Lobby open": "Lobby open",
         "Admin also plays": "Admin also plays",
-        "Lobby open while playing": "Lobby open while playing",
         "Start game": "Start game",
         "Invite link": "Invite link",
         "Initial money": "Initial money",
@@ -77,9 +74,6 @@ export default {
         "Name is too long! At most 25 characters!": "Name is too long! At most 25 characters!",
     },
     de: {
-        "Something went wrong! Reloading page..": "Etwas ist schief gelaufen! Seite wird neu geladen..",
-        "": "TODO: Text hinzufügen",
-        
         "Accept": "Akzeptieren",
         "This site uses (only functional) cookies!": "Diese Seite benutzt (nur funktionale) Cookies!",
         "Question": "Frage",
@@ -96,8 +90,8 @@ export default {
         "Join lobby": "Lobby beitreten",
         "Lobby ID was not found!": "Lobby ID wurde nicht gefunden!",
         "Lobby open for new players": "Lobby offen für neue Spieler",
+        "Lobby open": "Lobby offen",
         "Admin also plays": "Admin spielt auch mit",
-        "Lobby open while playing": "Lobby offen während des Spielens",
         "Start game": "Spiel starten",
         "Invite link": "Einladungslink",
         "Initial money": "Geld zu Beginn",

@@ -10,6 +10,7 @@
           <transition name="transition" mode="out-in" appear>
             <div class="compWindow" style="text-align: center;" key="question">
               <span>{{ lang["Question"] }} {{ current_question.id }}</span>
+              <lobby-open-checkbox :lang="lang" :admin="nickname == admin" :lobby_id="lobby" :sync_params="lobby_menu_params" :selected_window="selectedWindow" />
               <next-button v-if="nickname == admin" :lang="lang" :lobby_id="lobby" :selected_window="selectedWindow" />
             </div>
           </transition>
@@ -85,6 +86,7 @@ import LanguageSelector from './components/LanguageSelector.vue'
 import CookieConsent from './components/CookieConsent.vue'
 
 import PlayerList from './components/PlayerList.vue'
+import LobbyOpenCheckbox from './components/LobbyOpenCheckbox.vue'
 import NextButton from './components/NextButton.vue'
 
 import LoginWindow from './components/LoginWindow.vue'
@@ -104,6 +106,7 @@ export default
     LanguageSelector,
     CookieConsent,
     PlayerList,
+    LobbyOpenCheckbox,
     NextButton,
     LoginWindow,
     LobbySelection,

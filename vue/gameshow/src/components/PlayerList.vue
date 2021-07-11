@@ -32,11 +32,11 @@
                 </tr>
                 <tr>
                   <td><label for="money">{{ lang["Money"] }}: </label></td>
-                  <td><input type="number" name="money" v-model.number="editing_player.money" min="1"></td>
+                  <td><input type="number" id="money" v-model.number="editing_player.money" min="1"></td>
                 </tr>
                 <tr>
                   <td><label for="jokers">{{ lang["Jokers"] }}: </label></td>
-                  <td><input type="number" name="jokers" v-model.number="editing_player.jokers" min="1"></td>
+                  <td><input type="number" id="jokers" v-model.number="editing_player.jokers" min="1"></td>
                 </tr>
                 <tr>
                   <td colspan="2"><input type="submit" id="save" :value="lang['Save']"></td>

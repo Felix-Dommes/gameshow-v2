@@ -1,8 +1,8 @@
 <template>
   <div class="compWindow">
     <form @submit.prevent="submit_name">
-      <label for="name">{{ lang["Name"] }}:</label>
-      <input type="text" name="name" :placeholder="'<'+lang['Name']+'>'" v-model.trim="nickname" autofocus id="login-input" class="input" maxlength="25">
+      <label for="login-input">{{ lang["Name"] }}:</label>
+      <input type="text" id="login-input" :placeholder="'<'+lang['Name']+'>'" v-model.trim="nickname" autofocus class="input" maxlength="25">
       <br>
       <template v-if="error">
         <span class="error">{{ error_msg }}</span>
