@@ -77,14 +77,16 @@ impl Gameshow
     
     async fn generate_lobby_update(&self)
     {
+        let lobby_open = self.is_open().await;
+        let question_set = self.get_question_set().await;
         //send LobbySettingsUpdate to clients
         let event = EventType::LobbySettingsUpdate(EventLobbySettingsUpdate {
-            open: self.is_open().await,
+            open: lobby_open,
             initial_money: self.get_initial_money(),
             initial_jokers: self.get_initial_jokers(),
             normal_q_money: self.get_normal_q_money(),
             estimation_q_money: self.get_estimation_q_money(),
-            question_set: self.get_question_set().await,
+            question_set,
         });
         self.game_events.write().await.add(event);
     }
@@ -305,7 +307,7 @@ impl Gameshow
             });
             self.game_events.write().await.add(event);
             //return name
-            return Some(name);
+            Some(name)
         }
         else if self.is_open().await
         { //others need to have unique name (from others and from admin)
@@ -342,11 +344,11 @@ impl Gameshow
             });
             self.game_events.write().await.add(event);
             //return name
-            return Some(name);
+            Some(name)
         }
         else
         {
-            return None;
+            None
         }
     }
     
@@ -535,7 +537,7 @@ impl Gameshow
                 { //set player's vs_player
                     player.vs_player = String::from(vs_player);
                 }
-                else if player.vs_player == ""
+                else if player.vs_player.is_empty()
                 { //check if player has selected
                     all_selected = false;
                 }
@@ -670,18 +672,7 @@ impl Gameshow
         let mut repeat = true;
         while repeat
         {
-            repeat = !state::state_transition(
-                &self.lobby_state,
-                &self.questions,
-                &self.current_question,
-                &self.player_data,
-                &self.game_events,
-                &self.open,
-                &self.param_initial_money,
-                &self.param_initial_jokers,
-                &self.param_normal_q_money,
-                &self.param_estimation_q_money
-            ).await;
+            repeat = !state::state_transition(self).await;
         }
     }
 }
@@ -714,7 +705,7 @@ pub struct PublicPlayerData
     answer: usize,
 }
 
-fn make_public_player_data(players: &Vec<PlayerData>) -> Vec<PublicPlayerData>
+fn make_public_player_data(players: &[PlayerData]) -> Vec<PublicPlayerData>
 {
     players.iter().map(|player| {
         PublicPlayerData {
@@ -742,5 +733,5 @@ fn generate_random_string(length: usize) -> String
     {
         rnd_string.push(choose_from.choose(&mut rng).unwrap().to_owned());
     }
-    return rnd_string;
+    rnd_string
 }

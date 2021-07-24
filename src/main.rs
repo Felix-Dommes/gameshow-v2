@@ -1,8 +1,6 @@
 use dotenv::dotenv;
 
-mod datahandler;
-mod webserver;
-mod game;
+use gameshow_v2::*;
 
 use datahandler::DataHandler;
 

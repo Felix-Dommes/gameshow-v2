@@ -24,7 +24,7 @@ impl DataHandler
     {
         let (worker, sender) = DataWorker::new();
         worker.spawn_worker();
-        DataHandler { sender: sender }
+        DataHandler { sender }
     }
     
     /// Create a player in the database
@@ -81,5 +81,12 @@ impl DataHandler
         let (result_sender, result_receiver) = oneshot::channel();
         self.sender.send(DataAccess::GetQuestionSets(result_sender)).await.map_err(|_err| "db send data access error (dropped channel)")?;
         result_receiver.await.map_err(|_err| "db receive data access result error (dropped channel)")
+    }
+}
+
+impl Default for DataHandler
+{
+    fn default() -> Self {
+        DataHandler::new()
     }
 }

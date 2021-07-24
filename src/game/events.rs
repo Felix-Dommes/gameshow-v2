@@ -33,16 +33,16 @@ impl EventManager
     {
         let last = self.events.last();
         let mut id = 0;
-        if last.is_some()
+        if let Some(last) = last
         {
-            id = last.unwrap().id + 1;
+            id = last.id + 1;
         }
         let event_type = format!("{}", event);
         
         let new_event = Event {
-            id: id,
+            id,
             event_name: event_type,
-            event: event,
+            event,
         };
         self.events.push(new_event.clone());
         self.event_sender.send(new_event).ok();

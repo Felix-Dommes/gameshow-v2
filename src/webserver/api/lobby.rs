@@ -36,21 +36,21 @@ async fn create_lobby(db: web::Data<DataHandler>, session: Session, request: Htt
     
     if let Some(uuid) = session.get::<String>("uuid")?
     {
-        let name = db.get_player_name(uuid.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        let name = db.get_player_name(uuid.clone()).await.map_err(error::ErrorInternalServerError)?;
         if name.is_some()
         {
             let name = name.unwrap();
-            let lobby_uuid = db.create_lobby(uuid, name.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
-            return Ok(HttpResponse::Ok().json( (lobby_uuid, name) ));
+            let lobby_uuid = db.create_lobby(uuid, name.clone()).await.map_err(error::ErrorInternalServerError)?;
+            Ok(HttpResponse::Ok().json( (lobby_uuid, name) ))
         }
         else
         {
-            return Err(error::ErrorNotFound("Invalid UUID: Player UUID not found in database!"));
+            Err(error::ErrorNotFound("Invalid UUID: Player UUID not found in database!"))
         }
     }
     else
     {
-        return Err(error::ErrorUnauthorized("Invalid session: No player UUID!"));
+        Err(error::ErrorUnauthorized("Invalid session: No player UUID!"))
     }
 }
 
@@ -73,10 +73,10 @@ async fn join_lobby(db: web::Data<DataHandler>, session: Session, request: HttpR
     
     if let Some(uuid) = session.get::<String>("uuid")?
     {
-        let player_name = db.get_player_name(uuid.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        let player_name = db.get_player_name(uuid.clone()).await.map_err(error::ErrorInternalServerError)?;
         if player_name.is_some()
         {
-            let db_lobby = db.get_lobby(params.uuid.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+            let db_lobby = db.get_lobby(params.uuid.clone()).await.map_err(error::ErrorInternalServerError)?;
             if db_lobby.is_some()
             {
                 let lobby = db_lobby.unwrap();
@@ -85,26 +85,26 @@ async fn join_lobby(db: web::Data<DataHandler>, session: Session, request: HttpR
                 let joined_name = lobby.join(&uuid, player_name.unwrap()).await;
                 if joined_name.is_some()
                 {
-                    return Ok(HttpResponse::Ok().json(JoinLobbyReturn { admin: admin_name, new_name: joined_name.unwrap() }));
+                    Ok(HttpResponse::Ok().json(JoinLobbyReturn { admin: admin_name, new_name: joined_name.unwrap() }))
                 }
                 else
                 {
-                    return Err(error::ErrorForbidden("Could not join lobby: Lobby is closed!"));
+                    Err(error::ErrorForbidden("Could not join lobby: Lobby is closed!"))
                 }
             }
             else
             {
-                return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
+                Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"))
             }
         }
         else
         {
-            return Err(error::ErrorBadRequest("Invalid UUID: Player UUID not found in database!"));
+            Err(error::ErrorBadRequest("Invalid UUID: Player UUID not found in database!"))
         }
     }
     else
     {
-        return Err(error::ErrorUnauthorized("Invalid session: No player UUID!"));
+        Err(error::ErrorUnauthorized("Invalid session: No player UUID!"))
     }
 }
 
@@ -121,27 +121,27 @@ async fn leave_lobby(db: web::Data<DataHandler>, session: Session, request: Http
     
     if let Some(uuid) = session.get::<String>("uuid")?
     {
-        let db_lobby = db.get_lobby(params.uuid.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        let db_lobby = db.get_lobby(params.uuid.clone()).await.map_err(error::ErrorInternalServerError)?;
         if db_lobby.is_some()
         {
             let lobby = db_lobby.unwrap();
             if lobby.leave(&uuid).await
             {
-                return Ok(HttpResponse::NoContent().finish())
+                Ok(HttpResponse::NoContent().finish())
             }
             else
             {
-                return Err(error::ErrorNotFound("You did not join before!"));
+                Err(error::ErrorNotFound("You did not join before!"))
             }
         }
         else
         {
-            return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
+        Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"))
         }
     }
     else
     {
-        return Err(error::ErrorUnauthorized("Invalid session: No player UUID!"));
+        Err(error::ErrorUnauthorized("Invalid session: No player UUID!"))
     }
 }
 
@@ -156,15 +156,15 @@ async fn get_events(db: web::Data<DataHandler>, request: HttpRequest, params: we
 {
     ensure_cookie_consent(&request)?;
     
-    let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+    let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(error::ErrorInternalServerError)?;
     if db_lobby.is_some()
     {
         let lobby = db_lobby.unwrap();
-        return Ok(HttpResponse::Ok().header("Cache-Control", "no-cache").json(lobby.get_events().await));
+        Ok(HttpResponse::Ok().header("Cache-Control", "no-cache").json(lobby.get_events().await))
     }
     else
     {
-        return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
+        Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"))
     }
 }
 
@@ -179,7 +179,7 @@ async fn get_player_data(db: web::Data<DataHandler>, request: HttpRequest, param
 {
     ensure_cookie_consent(&request)?;
     
-    let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+    let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(error::ErrorInternalServerError)?;
     if db_lobby.is_some()
     {
         let lobby = db_lobby.unwrap();
@@ -187,7 +187,7 @@ async fn get_player_data(db: web::Data<DataHandler>, request: HttpRequest, param
     }
     else
     {
-        return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
+        Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"))
     }
 }
 
@@ -210,7 +210,7 @@ async fn update_lobby(db: web::Data<DataHandler>, session: Session, request: Htt
     
     if let Some(uuid) = session.get::<String>("uuid")?
     {
-        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(error::ErrorInternalServerError)?;
         if db_lobby.is_some()
         {
             let lobby = db_lobby.unwrap();
@@ -219,21 +219,21 @@ async fn update_lobby(db: web::Data<DataHandler>, session: Session, request: Htt
                 join!(lobby.set_open(params.open),
                     lobby.update_preferences(params.initial_money, params.initial_jokers, params.normal_q_money, params.estimation_q_money));
                 lobby.set_question_set(&params.question_set).await?;
-                return Ok(HttpResponse::NoContent().finish());
+                Ok(HttpResponse::NoContent().finish())
             }
             else
             {
-                return Err(error::ErrorUnauthorized("You are not the lobby admin!"));
+                Err(error::ErrorUnauthorized("You are not the lobby admin!"))
             }
         }
         else
         {
-            return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
+            Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"))
         }
     }
     else
     {
-        return Err(error::ErrorUnauthorized("Invalid session: No player UUID!"));
+        Err(error::ErrorUnauthorized("Invalid session: No player UUID!"))
     }
 }
 
@@ -251,28 +251,28 @@ async fn upload_custom_questions(db: web::Data<DataHandler>, session: Session, r
     
     if let Some(uuid) = session.get::<String>("uuid")?
     {
-        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(error::ErrorInternalServerError)?;
         if db_lobby.is_some()
         {
             let lobby = db_lobby.unwrap();
             if lobby.get_admin_uuid().await == uuid
             {
                 lobby.set_questions(params.questions.clone()).await?;
-                return Ok(HttpResponse::NoContent().finish());
+                Ok(HttpResponse::NoContent().finish())
             }
             else
             {
-                return Err(error::ErrorUnauthorized("You are not the lobby admin!"));
+                Err(error::ErrorUnauthorized("You are not the lobby admin!"))
             }
         }
         else
         {
-            return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
+            Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"))
         }
     }
     else
     {
-        return Err(error::ErrorUnauthorized("Invalid session: No player UUID!"));
+        Err(error::ErrorUnauthorized("Invalid session: No player UUID!"))
     }
 }
 
@@ -290,7 +290,7 @@ async fn kick_player(db: web::Data<DataHandler>, session: Session, request: Http
     
     if let Some(uuid) = session.get::<String>("uuid")?
     {
-        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(error::ErrorInternalServerError)?;
         if db_lobby.is_some()
         {
             let lobby = db_lobby.unwrap();
@@ -299,26 +299,26 @@ async fn kick_player(db: web::Data<DataHandler>, session: Session, request: Http
                 let res = lobby.kick_player(&params.name).await;
                 if res
                 {
-                    return Ok(HttpResponse::NoContent().finish());
+                    Ok(HttpResponse::NoContent().finish())
                 }
                 else
                 {
-                    return Err(error::ErrorNotFound("Player name was not found"));
+                    Err(error::ErrorNotFound("Player name was not found"))
                 }
             }
             else
             {
-                return Err(error::ErrorUnauthorized("You are not the lobby admin!"));
+                Err(error::ErrorUnauthorized("You are not the lobby admin!"))
             }
         }
         else
         {
-            return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
+            Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"))
         }
     }
     else
     {
-        return Err(error::ErrorUnauthorized("Invalid session: No player UUID!"));
+        Err(error::ErrorUnauthorized("Invalid session: No player UUID!"))
     }
 }
 
@@ -338,7 +338,7 @@ async fn set_player_attributes(db: web::Data<DataHandler>, session: Session, req
     
     if let Some(uuid) = session.get::<String>("uuid")?
     {
-        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(error::ErrorInternalServerError)?;
         if db_lobby.is_some()
         {
             let lobby = db_lobby.unwrap();
@@ -352,26 +352,26 @@ async fn set_player_attributes(db: web::Data<DataHandler>, session: Session, req
                 let res = lobby.set_player_attributes(&params.name, params.money, params.jokers).await;
                 if res
                 {
-                    return Ok(HttpResponse::NoContent().finish());
+                    Ok(HttpResponse::NoContent().finish())
                 }
                 else
                 {
-                    return Err(error::ErrorNotFound("Player name was not found"));
+                    Err(error::ErrorNotFound("Player name was not found"))
                 }
             }
             else
             {
-                return Err(error::ErrorUnauthorized("You are not the lobby admin!"));
+                Err(error::ErrorUnauthorized("You are not the lobby admin!"))
             }
         }
         else
         {
-            return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
+            Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"))
         }
     }
     else
     {
-        return Err(error::ErrorUnauthorized("Invalid session: No player UUID!"));
+        Err(error::ErrorUnauthorized("Invalid session: No player UUID!"))
     }
 }
 
@@ -388,28 +388,28 @@ async fn next_state(db: web::Data<DataHandler>, session: Session, request: HttpR
     
     if let Some(uuid) = session.get::<String>("uuid")?
     {
-        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(error::ErrorInternalServerError)?;
         if db_lobby.is_some()
         {
             let lobby = db_lobby.unwrap();
             if lobby.get_admin_uuid().await == uuid
             {
                 lobby.next_state().await;
-                return Ok(HttpResponse::NoContent().finish());
+                Ok(HttpResponse::NoContent().finish())
             }
             else
             {
-                return Err(error::ErrorUnauthorized("You are not the lobby admin!"));
+                Err(error::ErrorUnauthorized("You are not the lobby admin!"))
             }
         }
         else
         {
-            return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
+            Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"))
         }
     }
     else
     {
-        return Err(error::ErrorUnauthorized("Invalid session: No player UUID!"));
+        Err(error::ErrorUnauthorized("Invalid session: No player UUID!"))
     }
 }
 
@@ -428,7 +428,7 @@ async fn bet_money(db: web::Data<DataHandler>, session: Session, request: HttpRe
     
     if let Some(uuid) = session.get::<String>("uuid")?
     {
-        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(error::ErrorInternalServerError)?;
         if db_lobby.is_some()
         {
             let lobby = db_lobby.unwrap();
@@ -444,21 +444,21 @@ async fn bet_money(db: web::Data<DataHandler>, session: Session, request: HttpRe
             let res = lobby.bet(&uuid, params.money_bet).await;
             if res
             {
-                return Ok(HttpResponse::NoContent().finish());
+                Ok(HttpResponse::NoContent().finish())
             }
             else
             {
-                return Err(error::ErrorNotAcceptable("Game lobby is in wrong state!"));
+                Err(error::ErrorNotAcceptable("Game lobby is in wrong state!"))
             }
         }
         else
         {
-            return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
+            Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"))
         }
     }
     else
     {
-        return Err(error::ErrorUnauthorized("Invalid session: No player UUID!"));
+        Err(error::ErrorUnauthorized("Invalid session: No player UUID!"))
     }
 }
 
@@ -476,7 +476,7 @@ async fn attack_player(db: web::Data<DataHandler>, session: Session, request: Ht
     
     if let Some(uuid) = session.get::<String>("uuid")?
     {
-        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(error::ErrorInternalServerError)?;
         if db_lobby.is_some()
         {
             let lobby = db_lobby.unwrap();
@@ -492,21 +492,21 @@ async fn attack_player(db: web::Data<DataHandler>, session: Session, request: Ht
             let res = lobby.attack(&uuid, &params.vs_player).await;
             if res
             {
-                return Ok(HttpResponse::NoContent().finish());
+                Ok(HttpResponse::NoContent().finish())
             }
             else
             {
-                return Err(error::ErrorNotAcceptable("Game lobby is in wrong state!"));
+                Err(error::ErrorNotAcceptable("Game lobby is in wrong state!"))
             }
         }
         else
         {
-            return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
+            Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"))
         }
     }
     else
     {
-        return Err(error::ErrorUnauthorized("Invalid session: No player UUID!"));
+        Err(error::ErrorUnauthorized("Invalid session: No player UUID!"))
     }
 }
 
@@ -524,7 +524,7 @@ async fn answer_question(db: web::Data<DataHandler>, session: Session, request: 
     
     if let Some(uuid) = session.get::<String>("uuid")?
     {
-        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(error::ErrorInternalServerError)?;
         if db_lobby.is_some()
         {
             let lobby = db_lobby.unwrap();
@@ -539,21 +539,21 @@ async fn answer_question(db: web::Data<DataHandler>, session: Session, request: 
             let res = lobby.answer(&uuid, params.answer).await;
             if res
             {
-                return Ok(HttpResponse::NoContent().finish());
+                Ok(HttpResponse::NoContent().finish())
             }
             else
             {
-                return Err(error::ErrorNotAcceptable("Game lobby is in wrong state!"));
+                Err(error::ErrorNotAcceptable("Game lobby is in wrong state!"))
             }
         }
         else
         {
-            return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
+            Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"))
         }
     }
     else
     {
-        return Err(error::ErrorUnauthorized("Invalid session: No player UUID!"));
+        Err(error::ErrorUnauthorized("Invalid session: No player UUID!"))
     }
 }
 
@@ -570,7 +570,7 @@ async fn get_joker(db: web::Data<DataHandler>, session: Session, request: HttpRe
     
     if let Some(uuid) = session.get::<String>("uuid")?
     {
-        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+        let db_lobby = db.get_lobby(params.lobby_id.clone()).await.map_err(error::ErrorInternalServerError)?;
         if db_lobby.is_some()
         {
             let lobby = db_lobby.unwrap();
@@ -586,20 +586,20 @@ async fn get_joker(db: web::Data<DataHandler>, session: Session, request: HttpRe
             let res = lobby.get_joker(&uuid).await;
             if res.is_some()
             {
-                return Ok(HttpResponse::Ok().json(res.unwrap()));
+                Ok(HttpResponse::Ok().json(res.unwrap()))
             }
             else
             {
-                return Err(error::ErrorNotAcceptable("Game lobby is in wrong state!"));
+                Err(error::ErrorNotAcceptable("Game lobby is in wrong state!"))
             }
         }
         else
         {
-            return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
+            Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"))
         }
     }
     else
     {
-        return Err(error::ErrorUnauthorized("Invalid session: No player UUID!"));
+        Err(error::ErrorUnauthorized("Invalid session: No player UUID!"))
     }
 }
