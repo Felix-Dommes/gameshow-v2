@@ -24,7 +24,7 @@ impl DataBase
     {
         //be sure UUID is REALLY unique
         let mut uuid = String::from("");
-        while uuid == "" || self.players.contains_key(&uuid)
+        while uuid.is_empty() || self.players.contains_key(&uuid)
         {
             uuid = Uuid::new_v4().to_simple().to_string();
         }
@@ -58,7 +58,7 @@ impl DataBase
     {
         //be sure UUID is REALLY unique
         let mut uuid = String::from("");
-        while uuid == "" || self.lobbies.contains_key(&uuid)
+        while uuid.is_empty() || self.lobbies.contains_key(&uuid)
         {
             uuid = Uuid::new_v4().to_simple().to_string();
         }

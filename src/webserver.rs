@@ -49,13 +49,12 @@ pub async fn startup(db: DataHandler) -> std::io::Result<()>
 
 fn ensure_cookie_consent(request: &HttpRequest) -> HttpResult<()>
 {
-    let consent = request.cookie("CONSENT");
-    if consent.is_some()
+    let consent_cookie = request.cookie("CONSENT");
+    if let Some(consent) = consent_cookie
     {
-        match consent.unwrap().value()
+        if consent.value() == "1"
         {
-            "1" => return Ok(()),
-            _ => {},
+            return Ok(());
         };
     }
     Err(error::ErrorUnauthorized("Cookies were not accepted, but are required!"))

@@ -36,7 +36,7 @@
                 </tr>
                 <tr>
                   <td><label for="jokers">{{ lang["Jokers"] }}: </label></td>
-                  <td><input type="number" id="jokers" v-model.number="editing_player.jokers" min="1"></td>
+                  <td><input type="number" id="jokers" v-model.number="editing_player.jokers" min="0"></td>
                 </tr>
                 <tr>
                   <td colspan="2"><input type="submit" id="save" :value="lang['Save']"></td>

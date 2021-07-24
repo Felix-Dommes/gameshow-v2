@@ -33,7 +33,7 @@ impl DataWorker
     pub fn new() -> (Self, mpsc::Sender<DataAccess>)
     {
         let (sender, receiver) = mpsc::channel(DATA_ACCESS_CAPACITY);
-        let worker = DataWorker { db: DataBase::new(), receiver: receiver };
+        let worker = DataWorker { db: DataBase::new(), receiver };
         (worker, sender)
     }
     

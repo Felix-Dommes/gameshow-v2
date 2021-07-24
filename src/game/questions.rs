@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use serde::{Serialize, Deserialize};
 
 
-const QUESTIONS_FOLDER:&'static str = "./questions";
+const QUESTIONS_FOLDER: &str = "./questions";
 
 
 //different gameshow question types
@@ -48,10 +48,10 @@ pub fn find_question_files() -> std::io::Result<Vec<(String, PathBuf)>>
         {
             let file_name = path.file_stem();
             let file_type = path.extension();
-            if file_type.is_some()
+            if let Some(file_type) = file_type
             {
                 let file_name = file_name.unwrap().to_string_lossy().into_owned();
-                let file_type = file_type.unwrap().to_string_lossy().to_lowercase();
+                let file_type = file_type.to_string_lossy().to_lowercase();
                 if file_type == "json" && file_name != "questions-example"
                 {
                     list.push((file_name, path));

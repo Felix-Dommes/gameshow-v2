@@ -25,7 +25,7 @@ async fn event_stream(db: web::Data<DataHandler>, request: HttpRequest, lobby_id
 {
     ensure_cookie_consent(&request)?;
     
-    let db_lobby = db.get_lobby(lobby_id.into_inner()).await.map_err(|err| error::ErrorInternalServerError(err))?;
+    let db_lobby = db.get_lobby(lobby_id.into_inner()).await.map_err(error::ErrorInternalServerError)?;
     if db_lobby.is_some()
     {
         let lobby = db_lobby.unwrap();
@@ -38,7 +38,7 @@ async fn event_stream(db: web::Data<DataHandler>, request: HttpRequest, lobby_id
     }
     else
     {
-        return Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"));
+        Err(error::ErrorNotFound("Lobby not found: Lobby UUID not in database!"))
     }
 }
 
@@ -79,9 +79,9 @@ impl Stream for EventStreamClient
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>>
     {
         //if let Poll::Ready(_) = Pin::new(&mut self.pinger).poll_next(cx) //will register wakeup through cx.waker() on pending
-        if let Poll::Ready(_) = self.pinger.poll_tick(cx) //will register wakeup through cx.waker() on pending
+        if self.pinger.poll_tick(cx).is_ready() //will register wakeup through cx.waker() on pending
         {
-            return Poll::Ready(Some(Ok(EventStreamClient::ping())));
+            Poll::Ready(Some(Ok(EventStreamClient::ping())))
         }
         else
         {
